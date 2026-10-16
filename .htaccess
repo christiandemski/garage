@@ -1,0 +1,36 @@
+# Garage – Apache-Konfiguration (Netcup Webhosting)
+Options -Indexes
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  # HTTPS erzwingen
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+  # Authorization-Header an PHP durchreichen (für die API)
+  RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+  # Interne Ordner sperren
+  RewriteRule ^(src|pages|data|tools|\.git|\.github|\.idea)(/|$) - [F,L]
+</IfModule>
+
+# Konfiguration und sonstige interne Dateien nie ausliefern
+<FilesMatch "^(\.claude-account|\.gitignore|config\.php|config\.sample\.php|README\.md|composer\.(json|lock)|.*\.(sqlite|log|md|py|yml))$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "same-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/png "access plus 1 month"
+  ExpiresByType image/svg+xml "access plus 1 month"
+</IfModule>
+
+AddType application/manifest+json .webmanifest

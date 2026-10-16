@@ -1,0 +1,4 @@
+# Nur run.php ist von außen aufrufbar (mit ?key=…)
+<FilesMatch "^(?!run\.php$).*">
+  Require all denied
+</FilesMatch>

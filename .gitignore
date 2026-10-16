@@ -1,0 +1,6 @@
+config.php
+data/*
+!data/.htaccess
+.DS_Store
+.idea/
+.claude-account
