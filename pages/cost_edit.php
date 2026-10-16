@@ -59,16 +59,25 @@ if (is_post()) {
 }
 
 $docs = $id ? rows('SELECT * FROM documents WHERE cost_id = ?', [$id]) : [];
-$suggest = [
+$suggest = in_array($v['type'], T_BIKE, true) ? [
+    'wartung' => ['Inspektion', 'Service', 'Kette ölen', 'Schaltung einstellen', 'Bremsen entlüften'],
+    'reparatur' => ['Werkstatt', 'Bremsen', 'Platten', 'Speichen'],
+    'reifen' => ['Neue Reifen', 'Mantel', 'Schlauch', 'Dichtmilch'],
+    'versicherung' => ['Fahrradversicherung'],
+    'pflege' => ['Reinigung', 'Pflegemittel', 'Kettenöl'],
+    'teile' => ['Kette', 'Kassette', 'Bremsbeläge', 'Schlauch', 'Griffe'],
+    'zubehoer' => ['Zubehör', 'Werkzeug', 'Schloss', 'Licht', 'Helm'],
+    'finanzierung' => ['Leasingrate', 'Kreditrate'],
+] : [
     'wartung' => ['Inspektion', 'Ölwechsel', 'Service', 'Klimaservice', 'Bremsflüssigkeit'],
     'reparatur' => ['Werkstatt', 'Bremsen', 'Batterie', 'Steinschlag'],
     'reifen' => ['Reifenwechsel', 'Neue Reifen', 'Einlagerung', 'Wuchten'],
     'pruefung' => ['HU/AU'],
-    'versicherung' => ['Kfz-Versicherung', 'Fahrradversicherung'],
+    'versicherung' => ['Kfz-Versicherung'],
     'steuer' => ['Kfz-Steuer'],
     'pflege' => ['Autowäsche', 'Innenreinigung', 'Pflegemittel'],
     'parken' => ['Parken', 'Maut', 'Vignette'],
-    'teile' => ['Kette', 'Bremsbeläge', 'Mantel', 'Schlauch', 'Wischerblätter'],
+    'teile' => $v['type'] === 'motorrad' ? ['Kette', 'Kettensatz', 'Bremsbeläge', 'Batterie'] : ['Bremsbeläge', 'Batterie', 'Wischerblätter', 'Filter'],
     'zubehoer' => ['Zubehör', 'Werkzeug'],
     'finanzierung' => ['Leasingrate', 'Kreditrate'],
 ];
@@ -80,14 +89,14 @@ page_header('Kosten', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ?
 <?= form_open('', ['files' => true]) ?>
   <div class="field"><span class="label">Kategorie</span>
     <div class="chips radio-chips">
-      <?php foreach (COST_CATEGORIES as $k => [$label, $color]): if ($k === 'kraftstoff' && is_motor($v) && $c['category'] !== 'kraftstoff') continue; ?>
+      <?php foreach (for_vehicle(COST_CATEGORIES, $v, 2, $c['category']) as $k => [$label, $color]): if ($k === 'kraftstoff' && is_motor($v) && $c['category'] !== 'kraftstoff') continue; ?>
         <label><input type="radio" name="category" value="<?= e($k) ?>"<?= $c['category'] === $k ? ' checked' : '' ?>><span class="chip"><i class="dot-c" style="background:<?= e($color) ?>"></i><?= e($label) ?></span></label>
       <?php endforeach; ?>
     </div>
   </div>
   <div class="form-grid">
     <div class="full"><?= f_text('title', 'Bezeichnung', $c['title'], ['list' => 'title-suggest', 'placeholder' => 'z. B. Inspektion, Versicherung 2026']) ?></div>
-    <datalist id="title-suggest"><?php foreach (array_merge(...array_values($suggest)) as $s) echo '<option value="' . e($s) . '">'; ?></datalist>
+    <datalist id="title-suggest"><?php foreach (array_unique(array_merge(...array_values($suggest))) as $s) echo '<option value="' . e($s) . '">'; ?></datalist>
     <?= f_num('amount', 'Betrag', $c['amount'], ['suffix' => '€', 'required' => true, 'autofocus' => !$id]) ?>
     <?= f_date('date', 'Datum', $c['date'], ['required' => true]) ?>
     <?= f_num('odometer', 'Kilometerstand', $c['odometer'], ['dec' => 0, 'suffix' => 'km', 'placeholder' => 'optional']) ?>

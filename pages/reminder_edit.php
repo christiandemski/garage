@@ -65,7 +65,7 @@ if ($r['source'] !== 'manual'): ?>
 <?= form_open() ?>
   <div class="form-grid">
     <label class="field"><span class="label">Art</span><span class="control select"><select name="kind" id="reminder-kind">
-      <?php foreach (REMINDER_KINDS as $k => [$label, $ic, $m, $kmI]): ?>
+      <?php foreach (for_vehicle(REMINDER_KINDS, $v, 4, $r['kind']) as $k => [$label, $ic, $m, $kmI]): ?>
         <option value="<?= e($k) ?>" data-months="<?= e($m) ?>" data-km="<?= e(is_motor($v) ? $kmI : '') ?>"<?= $r['kind'] === $k ? ' selected' : '' ?>><?= e($label) ?></option>
       <?php endforeach; ?>
     </select><?= icon('chevron-down', 'select-ic') ?></span></label>

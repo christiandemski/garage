@@ -7,7 +7,7 @@ if ($id) {
     $v = vehicle_or_404($p['vehicle_id']);
 } else {
     $v = vehicle_or_404($_GET['v'] ?? 0);
-    $cat = $_GET['cat'] ?? (is_motor($v) ? 'reifen' : 'kette');
+    $cat = $_GET['cat'] ?? (in_array($v['type'], T_BIKE, true) ? 'kette' : 'reifen');
     $p = ['id' => 0, 'category' => $cat, 'name' => '', 'brand' => null, 'installed_date' => today(), 'installed_km' => current_km($v),
         'limit_km' => is_motor($v) ? null : (PART_CATEGORIES[$cat][1] ?? null), 'limit_months' => null, 'removed_date' => null, 'removed_km' => null,
         'price' => null, 'season' => null, 'dot' => null, 'tread_mm' => null, 'storage' => null, 'note' => null];
@@ -72,7 +72,7 @@ if ($w && $w['used'] !== null): ?>
 <?= form_open() ?>
   <div class="form-grid">
     <label class="field"><span class="label">Kategorie</span><span class="control select"><select name="category" id="part-cat">
-      <?php foreach (PART_CATEGORIES as $k => [$label, $lim]): ?><option value="<?= e($k) ?>" data-km="<?= e(is_motor($v) ? '' : $lim) ?>"<?= $p['category'] === $k ? ' selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
+      <?php foreach (for_vehicle(PART_CATEGORIES, $v, 2, $p['category']) as $k => [$label, $lim]): ?><option value="<?= e($k) ?>" data-km="<?= e(is_motor($v) ? '' : $lim) ?>"<?= $p['category'] === $k ? ' selected' : '' ?>><?= e($label) ?></option><?php endforeach; ?>
     </select><?= icon('chevron-down', 'select-ic') ?></span></label>
     <?= f_text('name', 'Bezeichnung', $p['name'], ['required' => true, 'placeholder' => is_motor($v) ? 'z. B. Winterreifen Conti' : 'z. B. Shimano CN-M8100']) ?>
     <?= f_text('brand', 'Marke / Modell', $p['brand'], ['placeholder' => 'optional']) ?>

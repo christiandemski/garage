@@ -195,6 +195,10 @@ const VEHICLE_TYPES = [
     'sonstiges' => 'Sonstiges',
 ];
 const MOTOR_TYPES = ['auto', 'motorrad'];
+// Für Kategorien: zu welchen Fahrzeugtypen sie passen (ohne Angabe: zu allen)
+const T_BIKE = ['fahrrad', 'ebike'];
+const T_FUEL = ['auto', 'motorrad', 'sonstiges'];
+const T_ROAD = ['auto', 'motorrad', 'anhaenger', 'sonstiges'];
 
 const FUEL_TYPES = [
     'benzin'  => 'Benzin',
@@ -207,17 +211,17 @@ const FUEL_TYPES = [
 ];
 
 const COST_CATEGORIES = [
-    'kraftstoff'   => ['Kraftstoff', '#0ea5a4'],
+    'kraftstoff'   => ['Kraftstoff', '#0ea5a4', T_FUEL],
     'wartung'      => ['Wartung & Inspektion', '#6366f1'],
     'reparatur'    => ['Reparatur', '#ef4444'],
     'reifen'       => ['Reifen', '#f59e0b'],
     'teile'        => ['Teile & Verschleiß', '#f97316'],
-    'pruefung'     => ['HU/AU & Prüfungen', '#8b5cf6'],
+    'pruefung'     => ['HU/AU & Prüfungen', '#8b5cf6', T_ROAD],
     'versicherung' => ['Versicherung', '#3b82f6'],
-    'steuer'       => ['Kfz-Steuer', '#64748b'],
+    'steuer'       => ['Kfz-Steuer', '#64748b', T_ROAD],
     'finanzierung' => ['Finanzierung & Leasing', '#a855f7'],
     'pflege'       => ['Pflege & Wäsche', '#06b6d4'],
-    'parken'       => ['Parken & Maut', '#84cc16'],
+    'parken'       => ['Parken & Maut', '#84cc16', T_FUEL],
     'zubehoer'     => ['Zubehör & Ausrüstung', '#ec4899'],
     'sonstiges'    => ['Sonstiges', '#94a3b8'],
 ];
@@ -225,14 +229,14 @@ function cat_label(string $c): string { return COST_CATEGORIES[$c][0] ?? ucfirst
 function cat_color(string $c): string { return COST_CATEGORIES[$c][1] ?? '#94a3b8'; }
 
 const REMINDER_KINDS = [
-    'hu'             => ['HU/AU (TÜV)', 'shield', 24, null],
+    'hu'             => ['HU/AU (TÜV)', 'shield', 24, null, T_ROAD],
     'inspektion'     => ['Inspektion', 'wrench', 24, 30000],
-    'oel'            => ['Ölwechsel', 'droplet', 12, 15000],
-    'reifen'         => ['Reifenwechsel', 'tire', 6, null],
-    'bremsfluessig'  => ['Bremsflüssigkeit', 'droplet', 24, null],
-    'verbandskasten' => ['Verbandskasten', 'cross', 60, null],
+    'oel'            => ['Ölwechsel', 'droplet', 12, 15000, T_FUEL],
+    'reifen'         => ['Reifenwechsel', 'tire', 6, null, T_FUEL],
+    'bremsfluessig'  => ['Bremsflüssigkeit', 'droplet', 24, null, ['auto', 'motorrad', 'fahrrad', 'ebike', 'sonstiges']],
+    'verbandskasten' => ['Verbandskasten', 'cross', 60, null, ['auto', 'sonstiges']],
     'versicherung'   => ['Versicherung', 'umbrella', 12, null],
-    'steuer'         => ['Kfz-Steuer', 'receipt', 12, null],
+    'steuer'         => ['Kfz-Steuer', 'receipt', 12, null, T_ROAD],
     'service'        => ['Service', 'wrench', 12, null],
     'sonstiges'      => ['Sonstiges', 'bell', null, null],
 ];
@@ -240,22 +244,31 @@ function kind_label(string $k): string { return REMINDER_KINDS[$k][0] ?? 'Sonsti
 
 const PART_CATEGORIES = [
     'reifen'      => ['Reifen', 6000],
-    'kette'       => ['Kette', 3000],
-    'kassette'    => ['Kassette', 10000],
-    'kettenblatt' => ['Kettenblatt', 15000],
+    'kette'       => ['Kette', 3000, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
+    'kassette'    => ['Kassette', 10000, ['fahrrad', 'ebike', 'sonstiges']],
+    'kettenblatt' => ['Kettenblatt', 15000, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
     'bremsbelag'  => ['Bremsbeläge', 3000],
     'bremsscheibe'=> ['Bremsscheibe', 15000],
-    'schlauch'    => ['Schlauch/Dichtmilch', null],
-    'zuege'       => ['Züge & Hüllen', 10000],
-    'lenkerband'  => ['Lenkerband/Griffe', null],
-    'gabel'       => ['Gabel/Dämpfer-Service', null],
-    'akku'        => ['Akku/Batterie', null],
+    'schlauch'    => ['Schlauch/Dichtmilch', null, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
+    'zuege'       => ['Züge & Hüllen', 10000, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
+    'lenkerband'  => ['Lenkerband/Griffe', null, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
+    'gabel'       => ['Gabel/Dämpfer-Service', null, ['fahrrad', 'ebike', 'motorrad', 'sonstiges']],
+    'akku'        => ['Akku/Batterie', null, ['auto', 'motorrad', 'ebike', 'sonstiges']],
     'licht'       => ['Licht', null],
-    'wischer'     => ['Scheibenwischer', null],
-    'filter'      => ['Filter', 15000],
+    'wischer'     => ['Scheibenwischer', null, ['auto', 'sonstiges']],
+    'filter'      => ['Filter', 15000, ['auto', 'motorrad', 'sonstiges']],
     'sonstiges'   => ['Sonstiges', null],
 ];
 function part_label(string $c): string { return PART_CATEGORIES[$c][0] ?? 'Sonstiges'; }
+
+/**
+ * Filtert COST_CATEGORIES / REMINDER_KINDS / PART_CATEGORIES auf die Einträge, die zum Fahrzeugtyp passen.
+ * $idx = Position der Typ-Liste im Eintrag; $keep bleibt immer drin (z. B. der bereits gespeicherte Wert).
+ */
+function for_vehicle(array $list, array $v, int $idx, ?string $keep = null): array
+{
+    return array_filter($list, fn($e, $k) => $k === $keep || !isset($e[$idx]) || in_array($v['type'], $e[$idx], true), ARRAY_FILTER_USE_BOTH);
+}
 
 const DOC_KINDS = [
     'fahrzeugschein' => 'Fahrzeugschein',
