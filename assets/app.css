@@ -214,6 +214,13 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 .li-end .li-sub { white-space: nowrap; }
 .li-val { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .li-chev { color: var(--muted); width: 16px; height: 16px; }
+/* Listeneintrag mit eigener Aktion links (z. B. Voll/Teil umschalten) */
+.li-split { display: flex; align-items: center; }
+.li-split > .list-item { flex: 1; min-width: 0; padding-left: 12px; }
+.li-toggle { padding-left: 18px; flex: none; }
+.li-toggle button { border: 0; cursor: pointer; padding: 0; transition: transform .12s; }
+.li-toggle button:hover { transform: scale(1.08); }
+.li-toggle button:disabled { opacity: .6; }
 .list-group-label { padding: 14px 18px 6px; font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: space-between; }
 .list-group-label:first-child { border-top: 0; }
 
