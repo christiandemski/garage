@@ -110,6 +110,14 @@ page_header('Einstellungen', ['nav' => 'settings', 'back' => url('more')]);
 </div>
 
 <div>
+  <div class="card flush settings-nav" id="daten">
+    <h2 style="padding:18px 18px 4px">Daten</h2>
+    <ul class="list">
+      <li><a class="list-item" href="<?= e(url('import')) ?>"><span class="li-ic c-teal"><?= icon('refresh') ?></span><span class="li-main"><span class="li-title">Import &amp; Abgleich</span><span class="li-sub">Spritmonitor, MySkoda, CSV</span></span><?= icon('chevron-right', 'li-chev') ?></a></li>
+      <li><a class="list-item" href="<?= e(url('export', ['what' => 'all'])) ?>"><span class="li-ic c-sky"><?= icon('download') ?></span><span class="li-main"><span class="li-title">Daten exportieren</span><span class="li-sub">Alle Einträge als CSV (ZIP)</span></span><?= icon('chevron-right', 'li-chev') ?></a></li>
+    </ul>
+  </div>
+
   <div class="card" id="api">
     <h2 class="mb">API-Schlüssel</h2>
     <p class="muted small">Für den automatischen MySkoda-Abgleich, das Home-Dashboard oder eigene Skripte.</p>

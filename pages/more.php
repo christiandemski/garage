@@ -16,7 +16,7 @@ $item = fn(string $href, string $ic, string $tone, string $title, string $sub = 
 </ul></div>
 
 <div class="card flush settings-nav mt"><ul class="list">
-  <?= $item(url('settings'), 'settings', 'c-indigo', 'Einstellungen', 'Profil, Design, Benachrichtigungen, API') ?>
+  <?= $item(url('settings'), 'settings', 'c-indigo', 'Einstellungen', 'Profil, Design, Import & Export, API') ?>
   <?= $item(url('export', ['what' => 'all']), 'download', 'c-sky', 'Daten exportieren', 'Alle Einträge als CSV (ZIP)') ?>
 </ul></div>
 <form method="post" action="<?= e(url('logout')) ?>" class="card flush settings-nav mt"><?= csrf_field() ?>

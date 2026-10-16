@@ -57,7 +57,7 @@ $skodaLast = setting_get('skoda_last_' . $u['id']);
 $apiBase = rtrim(absolute_url(rtrim((string)cfg('base_url'), '/') . '/'), '/') . '/api.php';
 $smReady = (string)cfg('spritmonitor_app_id', '') !== '';
 
-page_header('Import & Abgleich', ['nav' => 'import', 'back' => url('more')]);
+page_header('Import & Abgleich', ['nav' => 'settings', 'back' => url('settings')]);
 if (!$vs) { echo '<div class="card">' . empty_state('car', 'Noch keine Fahrzeuge', 'Lege zuerst ein Fahrzeug an, in das importiert werden soll.', 'Fahrzeug anlegen', url('vehicle_edit')) . '</div>'; page_footer(); return; }
 ?>
 <div class="grid grid-2">
