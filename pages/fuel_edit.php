@@ -22,10 +22,12 @@ if (is_post()) {
         flash('Tankvorgang gelöscht.');
         redirect($back);
     }
-    if ($id && ($_POST['do'] ?? '') === 'toggle_full') {
-        $full = (int)!$f['full_tank'];
-        update('fuelings', ['full_tank' => $full], 'id = ?', [$id]);
-        flash(fmt_date($f['date']) . ': als ' . ($full ? 'Voll' : 'Teil') . (is_electric($v) ? 'ladung' : 'betankung') . ' markiert.');
+    if ($id && ($_POST['do'] ?? '') === 'set_full') {
+        $full = (int)!empty($_POST['full']);
+        if ($full !== (int)$f['full_tank']) {
+            update('fuelings', ['full_tank' => $full], 'id = ?', [$id]);
+            flash(fmt_date($f['date']) . ': als ' . ($full ? 'Voll' : 'Teil') . (is_electric($v) ? 'ladung' : 'betankung') . ' markiert.');
+        }
         redirect($back . '#f' . $id);
     }
     $qty = num($_POST['quantity']);

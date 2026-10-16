@@ -125,11 +125,15 @@ case 'fuel':
     echo '<div class="row-between mb"><div class="muted small">' . count($list) . ' Einträge' . ($c['avg'] ? ' · Ø ' . fmt_num($c['avg'], 2) . ' ' . e(fuel_unit($v)) . '/100 km' : '') . '</div><a class="btn btn-primary btn-sm" href="' . e(url('fuel_edit', ['v' => $vid])) . '">' . icon('plus') . ' Tanken</a></div>';
     if (!$list) { echo '<div class="card">' . empty_state('fuel', 'Noch nicht getankt', 'Erfasse Tankvorgänge mit Kilometerstand – Verbrauch und Kosten werden automatisch berechnet. Alte Daten kannst du aus Spritmonitor importieren.', 'Tankvorgang erfassen', url('fuel_edit', ['v' => $vid])) . '</div>'; break; }
     echo '<div class="card flush"><ul class="list">';
+    $fillLbl = is_electric($v) ? [1 => 'Vollgeladen', 0 => 'Teilladung'] : [1 => 'Vollgetankt', 0 => 'Teilbetankung'];
     foreach ($list as $f) {
-        $tip = ($f['full_tank'] ? (is_electric($v) ? 'Vollgeladen' : 'Vollgetankt') : (is_electric($v) ? 'Teilladung' : 'Teilbetankung')) . ' – antippen zum Ändern';
+        $isFull = (int)(bool)$f['full_tank'];
+        $tip = $fillLbl[$isFull] . ' – ändern';
+        $opt = fn(int $val) => '<button type="submit" name="full" value="' . $val . '" class="li-pop-opt' . ($val === $isFull ? ' on' : '') . '">'
+            . '<span class="li-ic ' . ($val ? 'c-teal' : 'c-amber') . '">' . icon($val ? 'tank-full' : 'tank-part') . '</span>' . e($fillLbl[$val]) . '</button>';
         echo '<li class="li-split" id="f' . (int)$f['id'] . '">'
-            . '<form method="post" action="' . e(url('fuel_edit', ['id' => $f['id']])) . '" class="li-toggle">' . csrf_field() . '<input type="hidden" name="do" value="toggle_full">'
-            . '<button type="submit" class="li-ic ' . ($f['full_tank'] ? 'c-teal' : 'c-amber') . '" title="' . e($tip) . '" aria-label="' . e($tip) . '">' . icon($f['full_tank'] ? 'tank-full' : 'tank-part') . '</button></form>'
+            . '<details class="li-menu"><summary class="li-ic ' . ($isFull ? 'c-teal' : 'c-amber') . '" title="' . e($tip) . '" aria-label="' . e($tip) . '">' . icon($isFull ? 'tank-full' : 'tank-part') . '</summary>'
+            . '<form method="post" action="' . e(url('fuel_edit', ['id' => $f['id']])) . '" class="li-pop">' . csrf_field() . '<input type="hidden" name="do" value="set_full">' . $opt(1) . $opt(0) . '</form></details>'
             . '<a class="list-item" href="' . e(url('fuel_edit', ['id' => $f['id']])) . '"><span class="li-main"><span class="li-title">' . fmt_date($f['date']) . ' · ' . fmt_num($f['quantity'], 2) . ' ' . e(fuel_unit($v)) . (!$f['full_tank'] ? ' <span class="pill">Teil</span>' : '') . '</span>'
             . '<span class="li-sub">' . fmt_km($f['odometer']) . ($f['ppu'] ? ' · ' . fmt_num($f['ppu'], 3) . ' €/' . e(fuel_unit($v)) : '') . ($f['station'] ? ' · ' . e($f['station']) : '') . '</span></span>'
             . '<span class="li-end"><span class="li-val">' . fmt_money($f['total']) . '</span><span class="li-sub">' . ($f['consumption'] ? fmt_num($f['consumption'], 2) . ' ' . e(fuel_unit($v)) . '/100' : '&nbsp;') . '</span></span></a></li>';

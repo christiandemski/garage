@@ -215,12 +215,22 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 .li-val { font-weight: 650; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .li-chev { color: var(--muted); width: 16px; height: 16px; }
 /* Listeneintrag mit eigener Aktion links (z. B. Voll/Teil umschalten) */
-.li-split { display: flex; align-items: center; }
+.li-split { display: flex; align-items: center; position: relative; }
 .li-split > .list-item { flex: 1; min-width: 0; padding-left: 12px; }
-.li-toggle { padding-left: 18px; flex: none; }
-.li-toggle button { border: 0; cursor: pointer; padding: 0; transition: transform .12s; }
-.li-toggle button:hover { transform: scale(1.08); }
-.li-toggle button:disabled { opacity: .6; }
+.li-menu { padding-left: 18px; flex: none; }
+.li-menu > summary { list-style: none; cursor: pointer; transition: transform .12s; }
+.li-menu > summary::-webkit-details-marker { display: none; }
+.li-menu > summary:hover { transform: scale(1.08); }
+.li-menu[open] > summary { box-shadow: 0 0 0 2px var(--accent); }
+/* Mini-Menü: liegt waagerecht neben dem Icon, damit es in jede Zeile passt (Karte schneidet Überstand ab) */
+.li-pop { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); z-index: 5; display: flex; gap: 4px; padding: 4px;
+  background: var(--surface); border-radius: 12px; box-shadow: var(--shadow), 0 0 0 1px var(--line); }
+.li-pop-opt { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--text); font: inherit; font-weight: 600;
+  padding: 4px 12px 4px 4px; border-radius: 9px; cursor: pointer; white-space: nowrap; }
+.li-pop-opt .li-ic { width: 32px; height: 32px; border-radius: 8px; }
+.li-pop-opt:hover { background: var(--surface-2); }
+.li-pop-opt.on { background: var(--accent-soft); }
+.li-pop-opt:disabled { opacity: .6; }
 .list-group-label { padding: 14px 18px 6px; font-size: 12px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--surface); border-top: 1px solid var(--line); display: flex; justify-content: space-between; }
 .list-group-label:first-child { border-top: 0; }
 

@@ -26,7 +26,11 @@
       navigator.clipboard?.writeText(copy.dataset.copy).then(() => { copy.classList.add('on'); setTimeout(() => copy.classList.remove('on'), 1200); });
     }
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheets(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeSheets(); closeMenus(); } });
+
+  // Mini-Menüs in Listen (details.li-menu): nur eins offen, Klick daneben schließt
+  function closeMenus(except) { $$('details.li-menu[open]').forEach(d => d !== except && (d.open = false)); }
+  document.addEventListener('click', e => closeMenus(e.target.closest('details.li-menu')));
 
   // Schnell-Eintrag: Fahrzeugauswahl setzt Ziel-Links
   const qa = $('#qa-vehicles');
