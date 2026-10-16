@@ -69,23 +69,24 @@ function import_csv(array $vehicle, string $path, string $mode = 'auto'): array
     $vid = (int)$vehicle['id'];
     $cDate = csv_col($h, ['datum', 'date']);
     $cOdo = csv_col($h, ['kilometerstand', 'odometer', 'tachostand', 'km-stand', 'kilometer'], ['strecke', 'trip', '/100']);
-    $cTrip = csv_col($h, ['strecke', 'trip', 'distance', 'gefahren']);
+    // Spritmonitor: "Teil-Km" = Strecke, "Strecken" = Straßentyp-Code
+    $cTrip = csv_col($h, ['teil-km', 'strecke', 'trip', 'distance', 'gefahren'], ['strecken']);
     $cQty = csv_col($h, ['menge', 'quantity', 'liter', 'getankt', 'kwh'], ['einheit', 'unit']);
     $cTotal = csv_col($h, ['gesamtpreis', 'gesamtkosten', 'betrag', 'kosten', 'cost', 'price', 'preis', 'amount'], ['/l', 'pro ', 'per ', 'einheit', 'währung', 'waehrung', 'currency', 'kostenart', 'cost type']);
-    $cType = csv_col($h, ['tanktyp', 'betankungsart', 'typ', 'type', 'vollgetankt', 'voll'], ['kraftstoff', 'fuel', 'reifen', 'kosten', 'cost']);
+    $cType = csv_col($h, ['tankart', 'tanktyp', 'betankungsart', 'typ', 'type', 'vollgetankt', 'voll'], ['kraftstoff', 'fuel', 'reifen', 'kosten', 'cost']);
     $cNote = csv_col($h, ['notiz', 'note', 'bemerkung', 'kommentar', 'comment']);
     $cCat = csv_col($h, ['kostenart', 'kategorie', 'category', 'cost type', 'costtype']);
     $cTitle = csv_col($h, ['titel', 'title', 'bezeichnung', 'beschreibung', 'description']);
     $cStation = csv_col($h, ['tankstelle', 'station', 'ort', 'location']);
     $cFuelSort = csv_col($h, ['kraftstoff', 'sorte', 'fuel']);
-    $cKind = csv_col($h, ['art']);
+    $cKind = ($i = array_search('art', $h, true)) === false ? null : $i; // nur exakt "Art" (nicht "Tankart", "Kostenart")
 
     if ($cDate === null || $cTotal === null) {
         throw new RuntimeException('Spalten für Datum und Betrag nicht gefunden. Erkannt: ' . implode(', ', $h));
     }
     if ($mode === 'auto') $mode = $cQty !== null ? 'fuel' : 'costs';
 
-    $fuel = $costs = $skipped = 0;
+    $fuel = $costs = $skipped = $fixed = 0;
     db()->beginTransaction();
     try {
         foreach ($rows as $r) {
@@ -101,13 +102,22 @@ function import_csv(array $vehicle, string $path, string $mode = 'auto'): array
             if ($cQty !== null && $mode !== 'costs') {
                 $qty = num($get($cQty));
                 if ($qty && $rowKind !== 'kosten') {
-                    if (val('SELECT id FROM fuelings WHERE vehicle_id = ? AND date = ? AND ABS(total - ?) < 0.01 AND ABS(quantity - ?) < 0.01', [$vid, $date, $total, $qty])) { $skipped++; continue; }
-                    $type = mb_strtolower((string)$get($cType));
-                    $full = !preg_match('/teil|not ?full|partial|nein|^0$|false/', $type);
-                    $missed = (bool)preg_match('/ungültig|invalid|erste|first|fehl/', $type);
+                    [$full, $missed] = csv_fill_type((string)$get($cType));
+                    $trip = num($get($cTrip));
+                    $sort = csv_fuel_sort($get($cFuelSort));
+                    $dup = row('SELECT * FROM fuelings WHERE vehicle_id = ? AND date = ? AND ABS(total - ?) < 0.01 AND ABS(quantity - ?) < 0.01', [$vid, $date, $total, $qty]);
+                    if ($dup) {
+                        // Erneuter Import korrigiert Tankart und Strecke früher importierter Einträge
+                        $fix = [];
+                        if ($cType !== null && ((int)$dup['full_tank'] !== (int)$full || (int)$dup['missed_before'] !== (int)$missed)) $fix += ['full_tank' => (int)$full, 'missed_before' => (int)$missed];
+                        if ($cTrip !== null && $dup['source'] === 'csv' && ($dup['trip'] === null ? $trip !== null : $trip === null || abs((float)$dup['trip'] - $trip) > 0.01)) $fix['trip'] = $trip;
+                        if ($sort !== null && is_numeric((string)$dup['fuel_sort'])) $fix['fuel_sort'] = $sort;
+                        if ($fix) { update('fuelings', $fix, 'id = ?', [$dup['id']]); $fixed++; } else $skipped++;
+                        continue;
+                    }
                     insert('fuelings', [
-                        'vehicle_id' => $vid, 'date' => $date, 'odometer' => $odo, 'trip' => num($get($cTrip)), 'quantity' => $qty, 'total' => $total,
-                        'full_tank' => (int)$full, 'missed_before' => (int)$missed, 'fuel_sort' => str_or_null($get($cFuelSort), 30),
+                        'vehicle_id' => $vid, 'date' => $date, 'odometer' => $odo, 'trip' => $trip, 'quantity' => $qty, 'total' => $total,
+                        'full_tank' => (int)$full, 'missed_before' => (int)$missed, 'fuel_sort' => $sort,
                         'station' => str_or_null($get($cStation), 120), 'note' => $note, 'source' => 'csv', 'created_at' => now(),
                     ]);
                     $fuel++;
@@ -131,7 +141,37 @@ function import_csv(array $vehicle, string $path, string $mode = 'auto'): array
         db()->rollBack();
         throw $e;
     }
-    return [$fuel, $costs, $skipped, $mode];
+    return [$fuel, $costs, $skipped, $mode, $fixed];
+}
+
+/**
+ * Kraftstoffsorte aus der CSV. Spritmonitor exportiert nur Code-Nummern; unbekannte Codes werden verworfen.
+ */
+function csv_fuel_sort(?string $v): ?string
+{
+    $v = str_or_null($v, 30);
+    if ($v === null || !ctype_digit($v)) return $v;
+    return [20 => 'Super E10'][(int)$v] ?? null;
+}
+
+/**
+ * Tankart aus der CSV → [vollgetankt, Tankung davor fehlt].
+ * Spritmonitor exportiert Codes: 1 = voll, 2 = teil, 3 = Erstbetankung; sonst Text ("Voll", "Teil", "notfull" …).
+ */
+function csv_fill_type(string $type): array
+{
+    $type = mb_strtolower(trim($type));
+    if (ctype_digit($type)) {
+        return match ((int)$type) {
+            0, 2 => [false, false],
+            1 => [true, false],
+            default => [true, true], // Erstbetankung / ungültig: nicht in den Verbrauch rechnen
+        };
+    }
+    return [
+        !preg_match('/teil|nicht|not ?full|partial|nein|^0$|false/', $type),
+        (bool)preg_match('/ungültig|invalid|erste|first|fehl/', $type),
+    ];
 }
 
 /* =========================================================
@@ -208,14 +248,14 @@ function sm_sync_vehicle(array $vehicle, string $token): array
     foreach (sm_all($token, "/vehicle/$smId/fuelings.json") as $f) {
         $ext = (string)sm_pick($f, ['id', 'fuelingid']);
         if ($ext === '' || val('SELECT id FROM fuelings WHERE vehicle_id = ? AND ext_id = ?', [$vid, 'sm:' . $ext])) continue;
-        $type = (string)sm_pick($f, ['type', 'fuelingtype']);
+        [$full, $missed] = csv_fill_type((string)sm_pick($f, ['type', 'fuelingtype']));
         $qty = num(sm_pick($f, ['quantity', 'amount']));
         $total = num(sm_pick($f, ['cost', 'price', 'total', 'costs']));
         $date = date_or_null((string)sm_pick($f, ['date']));
         if (!$qty || $total === null || !$date) continue;
         insert('fuelings', [
             'vehicle_id' => $vid, 'date' => $date, 'odometer' => int_or_null(sm_pick($f, ['odometer'])), 'trip' => num(sm_pick($f, ['trip'])),
-            'quantity' => $qty, 'total' => $total, 'full_tank' => (int)($type !== 'notfull'), 'missed_before' => (int)in_array($type, ['first', 'invalid'], true),
+            'quantity' => $qty, 'total' => $total, 'full_tank' => (int)$full, 'missed_before' => (int)$missed,
             'station' => str_or_null((string)sm_pick($f, ['location', 'stationname', 'station']), 120), 'note' => str_or_null((string)sm_pick($f, ['note']), 2000),
             'source' => 'spritmonitor', 'ext_id' => 'sm:' . $ext, 'created_at' => now(),
         ]);

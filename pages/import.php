@@ -14,8 +14,8 @@ if (is_post()) {
             case 'csv':
                 $v = vehicle_or_404($_POST['vehicle'] ?? 0);
                 if (($_FILES['csv']['error'] ?? 1) !== UPLOAD_ERR_OK) throw new RuntimeException('Bitte eine CSV-Datei auswählen.');
-                [$nf, $nc, $sk, $mode] = import_csv($v, $_FILES['csv']['tmp_name'], $_POST['mode'] ?? 'auto');
-                flash("Import fertig: $nf Tankungen, $nc Kosten" . ($sk ? ", $sk übersprungen (Duplikate/leer)" : '') . '.');
+                [$nf, $nc, $sk, $mode, $fx] = import_csv($v, $_FILES['csv']['tmp_name'], $_POST['mode'] ?? 'auto');
+                flash("Import fertig: $nf Tankungen, $nc Kosten" . ($fx ? ", $fx bestehende Tankungen korrigiert" : '') . ($sk ? ", $sk übersprungen (Duplikate/leer)" : '') . '.');
                 log_sync('csv', "CSV-Import {$v['name']}: $nf Tankungen, $nc Kosten");
                 redirect(url('vehicle', ['id' => $v['id'], 'tab' => $nf ? 'fuel' : 'costs']));
             case 'sm_token':
