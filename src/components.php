@@ -36,7 +36,7 @@ function entry_row(array $e, array $vs): string
     foreach ($vs as $v) if ($v['id'] == $e['vehicle_id']) $vname = $v['name'];
     $isFuel = $e['src'] === 'fuel';
     $href = $isFuel ? url('fuel_edit', ['id' => $e['id']]) : url('cost_edit', ['id' => $e['id']]);
-    $ic = $isFuel ? 'fuel' : (['wartung' => 'wrench', 'reparatur' => 'wrench', 'reifen' => 'tire', 'versicherung' => 'umbrella', 'steuer' => 'receipt', 'pruefung' => 'shield', 'teile' => 'gauge', 'pflege' => 'droplet', 'parken' => 'tag'][$e['category']] ?? 'receipt');
+    $ic = $isFuel ? 'fuel' : (['wartung' => 'wrench', 'reparatur' => 'wrench', 'reifen' => 'tire', 'versicherung' => 'umbrella', 'steuer' => 'receipt', 'pruefung' => 'shield', 'teile' => 'gauge', 'pflege' => 'droplet', 'parken' => 'tag', 'garage' => 'home'][$e['category']] ?? 'receipt');
     $sub = $vname . ' · ' . fmt_date($e['date']) . ($isFuel && $e['quantity'] ? ' · ' . fmt_num($e['quantity'], 2) . ' l' : '');
     return '<li><a class="list-item" href="' . e($href) . '"><span class="li-ic" style="background:color-mix(in srgb,' . e(cat_color($e['category'])) . ' 14%,transparent);color:' . e(cat_color($e['category'])) . '">' . icon($ic) . '</span>'
         . '<span class="li-main"><span class="li-title">' . e($e['title']) . '</span><span class="li-sub">' . e($sub) . '</span></span>'

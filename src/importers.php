@@ -50,6 +50,7 @@ function guess_category(string $text): string
         'reifen' => 'reifen', 'tire' => 'reifen', 'tyre' => 'reifen',
         'leasing' => 'finanzierung', 'kredit' => 'finanzierung', 'finanz' => 'finanzierung', 'rate' => 'finanzierung',
         'wäsche' => 'pflege', 'waesche' => 'pflege', 'pflege' => 'pflege', 'wash' => 'pflege', 'reinigung' => 'pflege',
+        'garage' => 'garage', 'stellplatz' => 'garage', 'carport' => 'garage',
         'park' => 'parken', 'maut' => 'parken', 'toll' => 'parken', 'vignette' => 'parken',
         'zubehör' => 'zubehoer', 'zubehoer' => 'zubehoer', 'tuning' => 'zubehoer', 'accessor' => 'zubehoer',
         'adblue' => 'sonstiges', 'kraftstoff' => 'kraftstoff', 'tanken' => 'kraftstoff',

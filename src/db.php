@@ -63,7 +63,7 @@ function update(string $table, array $data, string $where, array $wp = []): void
 }
 
 /** Datenbankschema – wird bei jedem Start geprüft und bei Bedarf angelegt/erweitert */
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 
 function migrate(): void
 {
@@ -174,6 +174,7 @@ function migrate(): void
             vendor {$str(120)},
             repeat_months $int NOT NULL DEFAULT 0,
             repeated $int NOT NULL DEFAULT 0,
+            repeat_until $date NULL,
             note $txt,
             source {$str(20)} NOT NULL DEFAULT 'manual',
             ext_id {$str(40)},
@@ -270,6 +271,13 @@ function migrate(): void
     ];
     foreach ($idx as $i) {
         try { db()->exec($i); } catch (PDOException $e) { /* existiert bereits */ }
+    }
+    // Spalten für bestehende Installationen nachrüsten
+    $cols = [
+        "costs ADD COLUMN repeat_until $date NULL",
+    ];
+    foreach ($cols as $c) {
+        try { db()->exec("ALTER TABLE $c"); } catch (PDOException $e) { /* existiert bereits */ }
     }
     setting_set('schema_version', (string)SCHEMA_VERSION);
 }

@@ -222,6 +222,7 @@ const COST_CATEGORIES = [
     'finanzierung' => ['Finanzierung & Leasing', '#a855f7'],
     'pflege'       => ['Pflege & Wäsche', '#06b6d4'],
     'parken'       => ['Parken & Maut', '#84cc16', T_FUEL],
+    'garage'       => ['Garage & Stellplatz', '#10b981'],
     'zubehoer'     => ['Zubehör & Ausrüstung', '#ec4899'],
     'sonstiges'    => ['Sonstiges', '#94a3b8'],
 ];

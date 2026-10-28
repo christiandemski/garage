@@ -179,7 +179,8 @@ function materialize_recurring(?int $userId = null): void
     foreach ($list as $c) {
         $cur = $c;
         $guard = 0;
-        while (($next = add_months($cur['date'], (int)$cur['repeat_months'])) <= today() && $guard++ < 60) {
+        $until = min(today(), $c['repeat_until'] ?: today());
+        while (($next = add_months($cur['date'], (int)$cur['repeat_months'])) <= $until && $guard++ < 60) {
             update('costs', ['repeated' => 1], 'id = ?', [$cur['id']]);
             $new = $cur;
             unset($new['id']);
@@ -192,6 +193,31 @@ function materialize_recurring(?int $userId = null): void
             $cur = $new;
         }
     }
+}
+
+/**
+ * Enddatum einer wiederkehrenden Buchung auf die bereits fortgeschriebenen Folgeeinträge übertragen
+ * und Auto-Buchungen nach dem Enddatum entfernen. Liefert die Zahl der entfernten Einträge.
+ */
+function end_recurring(int $id, array $c): int
+{
+    $chain = rows("SELECT id, date FROM costs WHERE vehicle_id = ? AND category = ? AND title = ? AND repeat_months = ? AND source = 'auto' AND date > ? ORDER BY date",
+        [$c['vehicle_id'], $c['category'], $c['title'], $c['repeat_months'], $c['date']]);
+    $removed = 0;
+    $last = $id;
+    foreach ($chain as $x) {
+        if ($c['repeat_until'] && $x['date'] > $c['repeat_until']) {
+            q('UPDATE documents SET cost_id = NULL WHERE cost_id = ?', [$x['id']]);
+            q('DELETE FROM costs WHERE id = ?', [$x['id']]);
+            $removed++;
+        } else {
+            update('costs', ['repeat_until' => $c['repeat_until']], 'id = ?', [$x['id']]);
+            $last = $x['id'];
+        }
+    }
+    // Der jüngste verbleibende Eintrag schreibt (bis zum Enddatum) weiter fort
+    update('costs', ['repeated' => 0], 'id = ?', [$last]);
+    return $removed;
 }
 
 /* ---------- Fristen ---------- */

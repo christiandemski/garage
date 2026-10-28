@@ -9,7 +9,7 @@ if ($id) {
     $v = vehicle_or_404($_GET['v'] ?? 0);
     $cat = $_GET['cat'] ?? 'wartung';
     $c = ['id' => 0, 'date' => today(), 'category' => array_key_exists($cat, COST_CATEGORIES) ? $cat : 'wartung', 'title' => '', 'amount' => null,
-        'odometer' => null, 'vendor' => null, 'repeat_months' => 0, 'note' => null, 'source' => 'manual'];
+        'odometer' => null, 'vendor' => null, 'repeat_months' => 0, 'repeat_until' => null, 'note' => null, 'source' => 'manual'];
 }
 $vid = (int)$v['id'];
 $back = safe_target($_GET['back'] ?? '', url('vehicle', ['id' => $vid, 'tab' => 'costs']));
@@ -34,9 +34,16 @@ if (is_post()) {
             'odometer' => int_or_null($_POST['odometer']), 'vendor' => str_or_null($_POST['vendor'] ?? '', 120),
             'repeat_months' => max(0, (int)($_POST['repeat_months'] ?? 0)), 'note' => str_or_null($_POST['note'] ?? '', 4000),
         ];
+        $data['repeat_until'] = $data['repeat_months'] ? date_or_null($_POST['repeat_until'] ?? '') : null;
+        if ($data['repeat_until'] && $data['repeat_until'] < $data['date']) $data['repeat_until'] = $data['date'];
         if ($id) {
             if ($data['repeat_months'] != $c['repeat_months']) $data['repeated'] = 0;
             update('costs', $data, 'id = ?', [$id]);
+            // Enddatum geändert: auf die bereits fortgeschriebenen Folgeeinträge übertragen
+            if ($data['repeat_months'] && $data['repeat_months'] == $c['repeat_months'] && $data['repeat_until'] != $c['repeat_until']) {
+                $removed = end_recurring($id, $data);
+                if ($removed) flash($removed . ' automatisch erzeugte ' . ($removed === 1 ? 'Buchung' : 'Buchungen') . ' nach dem Enddatum entfernt.');
+            }
         } else {
             $data['created_at'] = now();
             $id = insert('costs', $data);
@@ -68,6 +75,7 @@ $suggest = in_array($v['type'], T_BIKE, true) ? [
     'teile' => ['Kette', 'Kassette', 'Bremsbeläge', 'Schlauch', 'Griffe'],
     'zubehoer' => ['Zubehör', 'Werkzeug', 'Schloss', 'Licht', 'Helm'],
     'finanzierung' => ['Leasingrate', 'Kreditrate'],
+    'garage' => ['Fahrradbox', 'Stellplatzmiete', 'Fahrradgarage'],
 ] : [
     'wartung' => ['Inspektion', 'Ölwechsel', 'Service', 'Klimaservice', 'Bremsflüssigkeit'],
     'reparatur' => ['Werkstatt', 'Bremsen', 'Batterie', 'Steinschlag'],
@@ -77,6 +85,7 @@ $suggest = in_array($v['type'], T_BIKE, true) ? [
     'steuer' => ['Kfz-Steuer'],
     'pflege' => ['Autowäsche', 'Innenreinigung', 'Pflegemittel'],
     'parken' => ['Parken', 'Maut', 'Vignette'],
+    'garage' => ['Garagenmiete', 'Stellplatzmiete', 'Tiefgaragenplatz', 'Carport'],
     'teile' => $v['type'] === 'motorrad' ? ['Kette', 'Kettensatz', 'Bremsbeläge', 'Batterie'] : ['Bremsbeläge', 'Batterie', 'Wischerblätter', 'Filter'],
     'zubehoer' => ['Zubehör', 'Werkzeug'],
     'finanzierung' => ['Leasingrate', 'Kreditrate'],
@@ -101,7 +110,8 @@ page_header('Kosten', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ?
     <?= f_date('date', 'Datum', $c['date'], ['required' => true]) ?>
     <?= f_num('odometer', 'Kilometerstand', $c['odometer'], ['dec' => 0, 'suffix' => 'km', 'placeholder' => 'optional']) ?>
     <?= f_text('vendor', 'Werkstatt / Händler', $c['vendor'], ['placeholder' => 'optional']) ?>
-    <?= f_select('repeat_months', 'Wiederholen', [0 => 'Einmalig', 1 => 'Monatlich', 3 => 'Vierteljährlich', 6 => 'Halbjährlich', 12 => 'Jährlich'], (int)$c['repeat_months'], ['hint' => 'Wiederkehrende Kosten (z. B. Versicherung) werden automatisch fortgeschrieben.', 'class' => 'full']) ?>
+    <?= f_select('repeat_months', 'Wiederholen', [0 => 'Einmalig', 1 => 'Monatlich', 3 => 'Vierteljährlich', 6 => 'Halbjährlich', 12 => 'Jährlich'], (int)$c['repeat_months'], ['hint' => 'Wiederkehrende Kosten (z. B. Versicherung) werden automatisch fortgeschrieben.']) ?>
+    <?= f_date('repeat_until', 'Wiederholen bis', $c['repeat_until'], ['class' => 'js-repeat-until', 'hint' => 'Optional – z. B. bei Kündigung. Bei Preisänderung hier beenden und eine neue Buchung mit neuem Betrag anlegen.']) ?>
     <?php if ($openReminders): ?>
       <?= f_select('complete_reminder', 'Gleichzeitig Frist erledigen', array_column(array_map(fn($r) => [$r['id'], $r['title'] . ($r['due_date'] ? ' (' . fmt_date($r['due_date']) . ')' : '')], $openReminders), 1, 0), $_GET['reminder'] ?? '', ['empty' => '– keine –', 'class' => 'full']) ?>
     <?php endif; ?>
@@ -119,5 +129,6 @@ page_header('Kosten', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ?
   </div>
 </form>
 </div>
+<script>(()=>{const s=document.querySelector('select[name=repeat_months]'),u=document.querySelector('.js-repeat-until');const f=()=>{u.hidden=s.value==='0'};s.addEventListener('change',f);f();})();</script>
 <?php if ($id): ?><div class="mt"><?= delete_button('', 'Den Eintrag') ?></div><?php endif;
 page_footer();

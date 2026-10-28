@@ -379,7 +379,7 @@ details.more .form-grid { margin-top: 12px; }
 
 /* ---------- Sheet / Dialog ---------- */
 .sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
-.sheet[hidden] { display: none; }
+.sheet[hidden], .field[hidden] { display: none; }
 .sheet-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.4); animation: fade .2s; }
 .sheet-panel { position: relative; width: 100%; max-width: 520px; background: var(--surface); border-radius: 24px 24px 0 0; padding: 10px 20px calc(24px + env(safe-area-inset-bottom)); box-shadow: var(--shadow-lg); animation: up .28s cubic-bezier(.2,.9,.3,1); max-height: 90vh; overflow: auto; }
 @media (min-width: 640px) { .sheet { align-items: center; } .sheet-panel { border-radius: 24px; padding-bottom: 24px; } }
