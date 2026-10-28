@@ -91,7 +91,7 @@ $diff = $lastYearSameTime > 0 ? ($sumYear - $lastYearSameTime) / $lastYearSameTi
 
     <div class="card flush mt">
       <div class="card-head"><h2>Zuletzt erfasst</h2></div>
-      <?php $recent = array_slice(cost_entries($ids), 0, 6); ?>
+      <?php $recent = array_slice(merge_entries(cost_entries($ids)), 0, 6); ?>
       <?php if (!$recent): ?><div style="padding:0 18px 18px" class="muted small">Noch keine Einträge.</div><?php else: ?>
       <ul class="list"><?php foreach ($recent as $e) echo entry_row($e, $vs); ?></ul>
       <?php endif; ?>

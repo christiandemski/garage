@@ -63,7 +63,7 @@ function update(string $table, array $data, string $where, array $wp = []): void
 }
 
 /** Datenbankschema – wird bei jedem Start geprüft und bei Bedarf angelegt/erweitert */
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 
 function migrate(): void
 {
@@ -181,6 +181,15 @@ function migrate(): void
             created_at $dt NOT NULL,
             FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
         )",
+        "cost_items (
+            id $pk,
+            cost_id $fk NOT NULL,
+            category {$str(30)} NOT NULL,
+            title {$str(160)},
+            amount $money NOT NULL,
+            sort $int NOT NULL DEFAULT 0,
+            FOREIGN KEY (cost_id) REFERENCES costs(id) ON DELETE CASCADE
+        )",
         "odometer_log (
             id $pk,
             vehicle_id $fk NOT NULL,
@@ -264,6 +273,7 @@ function migrate(): void
     $idx = [
         'CREATE INDEX idx_fuel_v ON fuelings (vehicle_id, date)',
         'CREATE INDEX idx_cost_v ON costs (vehicle_id, date)',
+        'CREATE INDEX idx_citem_c ON cost_items (cost_id)',
         'CREATE INDEX idx_odo_v ON odometer_log (vehicle_id, date)',
         'CREATE INDEX idx_rem_v ON reminders (vehicle_id)',
         'CREATE INDEX idx_parts_v ON parts (vehicle_id)',

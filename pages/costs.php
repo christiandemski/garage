@@ -14,6 +14,7 @@ else { $period = preg_match('/^\d{4}$/', $period) ? $period : date('Y'); $from =
 
 $sel = $vf ? [$vf] : $ids;
 $entries = cost_entries($sel, $from, $to, $cat ?: null);
+$list = merge_entries($entries);
 $total = array_sum(array_column($entries, 'amount'));
 $byCat = sum_by($entries, fn($e) => $e['category']);
 $byVeh = sum_by($entries, fn($e) => $e['vehicle_id']);
@@ -61,7 +62,7 @@ page_header('Kosten', ['nav' => 'costs', 'actions' => '<a class="icon-btn" href=
 <script>document.querySelectorAll('.filters select').forEach(s=>s.addEventListener('change',()=>s.form.submit()));</script>
 
 <div class="kpis">
-  <?= kpi('Summe · ' . $label, fmt_money($total, false), count($entries) . ' Einträge', 'euro', 'accent') ?>
+  <?= kpi('Summe · ' . $label, fmt_money($total, false), count($list) . ' Einträge', 'euro', 'accent') ?>
   <?= kpi('Ø pro Monat', fmt_money($total / $monthsCount, false), $period === date('Y') ? 'bis heute' : '', 'calendar') ?>
   <?= kpi('Kraftstoff', fmt_money($byCat['kraftstoff'] ?? 0, false), $total ? fmt_num(($byCat['kraftstoff'] ?? 0) / $total * 100) . ' % der Kosten' : '', 'fuel') ?>
   <?= kpi('Kosten pro km', $kmSum > 0 ? fmt_num($motorCost / $kmSum * 100, 1) . '<small>ct</small>' : '–', $kmSum ? fmt_km(round($kmSum)) . ' · nur Auto' : 'Auto · zu wenig km-Daten', 'route') ?>
@@ -77,11 +78,11 @@ page_header('Kosten', ['nav' => 'costs', 'actions' => '<a class="icon-btn" href=
       <?= bar_chart($series, ['colors' => array_map(fn($c) => $c[1], COST_CATEGORIES), 'height' => 200]) ?>
     </div>
     <div class="card flush mt">
-      <div class="card-head"><h2>Einträge</h2><span class="muted small"><?= count($entries) ?></span></div>
+      <div class="card-head"><h2>Einträge</h2><span class="muted small"><?= count($list) ?></span></div>
       <ul class="list">
-        <?php $lastM = null; foreach (array_slice($entries, 0, 400) as $e):
+        <?php $lastM = null; foreach (array_slice($list, 0, 400) as $e):
           $m = substr($e['date'], 0, 7);
-          if ($m !== $lastM) { $mSum = array_sum(array_column(array_filter($entries, fn($x) => str_starts_with($x['date'], $m)), 'amount')); echo '<li class="list-group-label"><span>' . e(fmt_month($m, true)) . '</span><span>' . fmt_money($mSum) . '</span></li>'; $lastM = $m; }
+          if ($m !== $lastM) { $mSum = array_sum(array_column(array_filter($list, fn($x) => str_starts_with($x['date'], $m)), 'amount')); echo '<li class="list-group-label"><span>' . e(fmt_month($m, true)) . '</span><span>' . fmt_money($mSum) . '</span></li>'; $lastM = $m; }
           echo entry_row($e, $vs);
         endforeach; ?>
       </ul>

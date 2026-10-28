@@ -32,7 +32,7 @@ if ($what === 'costs') {
     [$from, $to] = preg_match('/^\d{4}$/', $y) ? ["$y-01-01", "$y-12-31"] : ($y === '12m' ? [date('Y-m-01', strtotime('-11 months')), today()] : [null, null]);
     $rows = [];
     foreach (cost_entries($sel, $from, $to) as $e) {
-        $rows[] = [$e['src'] === 'fuel' ? 'Tanken' : 'Kosten', $names[$e['vehicle_id']] ?? '', fmt_date($e['date']), cat_label($e['category']), $e['title'], $dec($e['amount']), $e['odometer'], $dec($e['quantity']), $e['vendor'], $e['note']];
+        $rows[] = [$e['src'] === 'fuel' ? 'Tanken' : 'Kosten', $names[$e['vehicle_id']] ?? '', fmt_date($e['date']), cat_label($e['category']), $e['title'] . ($e['item_title'] !== null && $e['item_title'] !== $e['title'] ? ' – ' . $e['item_title'] : ''), $dec($e['amount']), $e['odometer'], $dec($e['quantity']), $e['vendor'], $e['note']];
     }
     session_write_close();
     header('Content-Type: text/csv; charset=UTF-8');
@@ -49,6 +49,8 @@ $files = [
         array_map(fn($f) => [$names[$f['vehicle_id']] ?? '', fmt_date($f['date']), $f['odometer'], $dec($f['trip']), $dec($f['quantity']), $dec($f['total']), $f['full_tank'] ? 'Voll' : 'Teil', $f['fuel_sort'], $f['station'], $f['note']], rows("SELECT * FROM fuelings WHERE vehicle_id IN ($in) ORDER BY vehicle_id, date"))),
     'kosten.csv' => csv_string(['Fahrzeug', 'Datum', 'Kategorie', 'Titel', 'Betrag', 'Kilometerstand', 'Werkstatt', 'Wiederholung (Monate)', 'Wiederholen bis', 'Notiz'],
         array_map(fn($c) => [$names[$c['vehicle_id']] ?? '', fmt_date($c['date']), cat_label($c['category']), $c['title'], $dec($c['amount']), $c['odometer'], $c['vendor'], $c['repeat_months'], $c['repeat_until'], $c['note']], rows("SELECT * FROM costs WHERE vehicle_id IN ($in) ORDER BY vehicle_id, date"))),
+    'kostenpositionen.csv' => csv_string(['Fahrzeug', 'Datum', 'Beleg', 'Kategorie', 'Position', 'Betrag'],
+        array_map(fn($i) => [$names[$i['vehicle_id']] ?? '', fmt_date($i['date']), $i['ctitle'], cat_label($i['category']), $i['title'], $dec($i['amount'])], rows("SELECT i.*, c.vehicle_id, c.date, c.title AS ctitle FROM cost_items i JOIN costs c ON c.id = i.cost_id WHERE c.vehicle_id IN ($in) ORDER BY c.vehicle_id, c.date, i.sort"))),
     'kilometer.csv' => csv_string(['Fahrzeug', 'Datum', 'Kilometerstand', 'Strecke', 'Quelle', 'Notiz'],
         array_map(fn($o) => [$names[$o['vehicle_id']] ?? '', fmt_date($o['date']), $o['km'], $dec($o['trip']), $o['source'], $o['note']], rows("SELECT * FROM odometer_log WHERE vehicle_id IN ($in) ORDER BY vehicle_id, date"))),
     'fristen.csv' => csv_string(['Fahrzeug', 'Titel', 'Art', 'Fällig am', 'Fällig bei km', 'Intervall Monate', 'Intervall km', 'Erledigt', 'Notiz'],

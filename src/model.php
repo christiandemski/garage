@@ -141,7 +141,10 @@ function consumption_stats(int $vid): array
 
 /* ---------- Kosten ---------- */
 
-/** Alle Kosten (inkl. Tankungen) als einheitliche Liste */
+/**
+ * Alle Kosten (inkl. Tankungen) als einheitliche Liste.
+ * Belege mit Positionen erscheinen je Position (Kategorie + Teilbetrag) – für Listen mit merge_entries() zusammenfassen.
+ */
 function cost_entries(array $vehicleIds, ?string $from = null, ?string $to = null, ?string $category = null): array
 {
     if (!$vehicleIds) return [];
@@ -153,13 +156,46 @@ function cost_entries(array $vehicleIds, ?string $from = null, ?string $to = nul
     $parts = [];
     $params = [];
     if (!$category || $category === 'kraftstoff') {
-        $parts[] = "SELECT 'fuel' AS src, id, vehicle_id, date, 'kraftstoff' AS category, " . (is_sqlite() ? "'Tanken'" : "'Tanken'") . " AS title, total AS amount, odometer, station AS vendor, note, quantity FROM fuelings WHERE vehicle_id IN ($in) $where";
+        $parts[] = "SELECT 'fuel' AS src, id, vehicle_id, date, 'kraftstoff' AS category, 'kraftstoff' AS main_category, 'Tanken' AS title, NULL AS item_id, NULL AS item_title, total AS amount, odometer, station AS vendor, note, quantity FROM fuelings WHERE vehicle_id IN ($in) $where";
         $params = array_merge($params, $p);
     }
-    $catWhere = $category ? ' AND category = ?' : '';
-    $parts[] = "SELECT 'cost' AS src, id, vehicle_id, date, category, title, amount, odometer, vendor, note, NULL AS quantity FROM costs WHERE vehicle_id IN ($in) $where$catWhere";
+    $catWhere = $category ? ' AND COALESCE(i.category, c.category) = ?' : '';
+    $parts[] = "SELECT 'cost' AS src, c.id, c.vehicle_id, c.date, COALESCE(i.category, c.category) AS category, c.category AS main_category, c.title, i.id AS item_id, i.title AS item_title,
+        COALESCE(i.amount, c.amount) AS amount, c.odometer, c.vendor, c.note, NULL AS quantity
+        FROM costs c LEFT JOIN cost_items i ON i.cost_id = c.id WHERE c.vehicle_id IN ($in) " . str_replace(' date ', ' c.date ', $where) . $catWhere;
     $params = array_merge($params, $p, $category ? [$category] : []);
     return rows('SELECT * FROM (' . implode(' UNION ALL ', $parts) . ') x ORDER BY date DESC, id DESC', $params);
+}
+
+/** Positionen eines Belegs wieder zu einer Zeile zusammenfassen (für Listen) */
+function merge_entries(array $entries): array
+{
+    $out = [];
+    foreach ($entries as $e) {
+        $k = $e['src'] . ':' . $e['id'];
+        if (!isset($out[$k])) {
+            $out[$k] = ['category' => $e['main_category'], 'items' => 0] + $e;
+            $out[$k]['amount'] = 0;
+        }
+        $out[$k]['amount'] += (float)$e['amount'];
+        if ($e['item_id'] !== null) $out[$k]['items']++;
+    }
+    return array_values($out);
+}
+
+/** Positionen eines Belegs */
+function cost_items(int $costId): array
+{
+    return rows('SELECT * FROM cost_items WHERE cost_id = ? ORDER BY sort, id', [$costId]);
+}
+
+/** Positionen speichern (ersetzt die vorhandenen) */
+function save_cost_items(int $costId, array $items): void
+{
+    q('DELETE FROM cost_items WHERE cost_id = ?', [$costId]);
+    foreach (array_values($items) as $i => $it) {
+        insert('cost_items', ['cost_id' => $costId, 'category' => $it['category'], 'title' => $it['title'], 'amount' => $it['amount'], 'sort' => $i]);
+    }
 }
 
 function sum_by(array $entries, callable $key): array
@@ -190,6 +226,7 @@ function materialize_recurring(?int $userId = null): void
             $new['source'] = 'auto';
             $new['created_at'] = now();
             $new['id'] = insert('costs', $new);
+            save_cost_items((int)$new['id'], cost_items((int)$cur['id']));
             $cur = $new;
         }
     }

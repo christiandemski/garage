@@ -90,7 +90,7 @@ case 'overview':
         . ($e12 ? bar_chart($series, ['colors' => array_map(fn($x) => $x[1], COST_CATEGORIES)]) : '<p class="muted">Noch keine Kosten in den letzten 12 Monaten.</p>') . '</div>';
     // Letzte Einträge
     echo '<div class="card flush"><div class="card-head"><h2>Letzte Einträge</h2></div>';
-    echo $eAll ? '<ul class="list">' . implode('', array_map(fn($e) => entry_row($e, [$v]), array_slice($eAll, 0, 6))) . '</ul>' : '<p class="muted" style="padding:0 18px 18px">Noch keine Einträge.</p>';
+    echo $eAll ? '<ul class="list">' . implode('', array_map(fn($e) => entry_row($e, [$v]), array_slice(merge_entries($eAll), 0, 6))) . '</ul>' : '<p class="muted" style="padding:0 18px 18px">Noch keine Einträge.</p>';
     echo '</div></div><div>';
     // Fällig
     $due = due_items($v);
@@ -142,7 +142,7 @@ case 'fuel':
     break;
 
 case 'costs':
-    $list = rows('SELECT * FROM costs WHERE vehicle_id = ? ORDER BY date DESC, id DESC', [$vid]);
+    $list = rows('SELECT c.*, (SELECT COUNT(*) FROM cost_items i WHERE i.cost_id = c.id) AS items FROM costs c WHERE c.vehicle_id = ? ORDER BY c.date DESC, c.id DESC', [$vid]);
     echo '<div class="row-between mb"><div class="muted small">' . count($list) . ' Einträge · ' . fmt_money(array_sum(array_column($list, 'amount'))) . '</div><a class="btn btn-primary btn-sm" href="' . e(url('cost_edit', ['v' => $vid])) . '">' . icon('plus') . ' Kosten</a></div>';
     if (!$list) { echo '<div class="card">' . empty_state('receipt', 'Keine Kosten erfasst', 'Werkstatt, Versicherung, Steuer, Reifen, Zubehör – alles, was das Fahrzeug kostet.', 'Kosten erfassen', url('cost_edit', ['v' => $vid])) . '</div>'; break; }
     echo '<div class="card flush"><ul class="list">';
