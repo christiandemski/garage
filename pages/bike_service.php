@@ -15,7 +15,7 @@ $addUrl = url('service_edit', $vf ? ['v' => $vf] : []);
 
 page_header('Service', ['nav' => 'fahrraeder', 'heading' => 'Fahrräder',
     'actions' => $bs ? '<a class="btn btn-primary btn-sm" href="' . e($addUrl) . '">' . icon('plus') . '<span>Service</span></a>' : '']);
-echo bike_area_nav('bike_service');
+echo area_nav('fahrraeder', 'bike_service');
 
 if (!$bs) {
     echo '<div class="card">' . empty_state('bike', 'Noch keine Fahrräder', 'Lege zuerst ein Fahrrad an – danach planst und dokumentierst du hier Inspektionen und Bremsenservice.', 'Fahrrad anlegen', url('vehicle_edit', ['type' => 'fahrrad'])) . '</div>';
@@ -44,6 +44,23 @@ if (!$bs) {
     </div>
   <?php endforeach; ?>
 </div>
+
+<?php
+$kmBy = [];
+foreach ($bs as $b) $kmBy[$b['id']] = current_km($b);
+$rem = rows("SELECT r.*, v.name AS vname FROM reminders r JOIN vehicles v ON v.id = r.vehicle_id WHERE r.vehicle_id IN ($in) AND r.done_at IS NULL");
+$wear = array_filter(due_items(), fn($d) => $d['type'] === 'part' && in_array((int)$d['v']['id'], $sel, true));
+if ($rem || $wear): ?>
+  <h3 class="section-title">Fristen & Verschleiß</h3>
+  <?php if ($rem) echo reminders_list($rem, $kmBy, !$vf); ?>
+  <?php if ($wear): ?>
+    <div class="card flush<?= $rem ? ' mt' : '' ?>"><ul class="list">
+      <?php foreach ($wear as $d): ?>
+        <li><a class="list-item" href="<?= e($d['href']) ?>"><span class="li-ic <?= $d['status'] === 'overdue' ? 'c-red' : 'c-amber' ?>"><?= icon('gauge') ?></span><span class="li-main"><span class="li-title"><?= e($d['title']) ?></span><span class="li-sub"><?= e($d['v']['name'] . ' · ' . $d['text']) ?></span></span><?= status_pill($d['status']) ?></a></li>
+      <?php endforeach; ?>
+    </ul></div>
+  <?php endif; ?>
+<?php endif; ?>
 
 <h3 class="section-title">Geplant</h3>
 <?php if ($planned): ?>

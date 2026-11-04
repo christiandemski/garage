@@ -10,13 +10,15 @@ if ($id) {
     if (!empty($_GET['v'])) $v = vehicle_or_404($_GET['v']);
     $d = ['id' => 0, 'title' => '', 'kind' => isset(DOC_KINDS[$_GET['kind'] ?? '']) ? $_GET['kind'] : 'rechnung', 'vehicle_id' => $v['id'] ?? null,
         'area' => null, 'doc_date' => null, 'valid_until' => null];
-    if (!$v && ($_GET['area'] ?? '') !== 'fahrraeder') redirect(url('documents'));
 }
-// Fahrradbereich: Rad frei wählbar, auch „Allgemein“ ohne Rad
-$bikeArea = ($_GET['area'] ?? '') === 'fahrraeder' || (!$v) || vehicle_group($v) === 'fahrraeder';
-$bs = $bikeArea ? bikes() : [];
-if ($bikeArea && $v && !in_array((int)$v['id'], array_map('intval', array_column($bs, 'id')), true)) $bs[] = $v;
-$fallback = $bikeArea && (($_GET['area'] ?? '') === 'fahrraeder' || !$v) ? url('bike_docs') : url('vehicle', ['id' => $v['id'] ?? 0, 'tab' => 'docs']);
+// Bereich (Autos / Fahrräder): Fahrzeug frei wählbar, auch „Allgemein“ ohne Fahrzeug
+$areaParam = isset(VEHICLE_GROUPS[$_GET['area'] ?? '']) ? $_GET['area'] : null;
+$area = $v ? vehicle_group($v) : ($areaParam ?? ($d['area'] ?: 'autos'));
+$bikeArea = $area === 'fahrraeder';
+$bs = array_values(array_filter(vehicles(), fn($x) => vehicle_group($x) === $area));
+if ($v && !in_array((int)$v['id'], array_map('intval', array_column($bs, 'id')), true)) $bs[] = $v;
+$areaDocs = url($bikeArea ? 'bike_docs' : 'documents');
+$fallback = ($areaParam || !$v) ? $areaDocs : url('vehicle', ['id' => $v['id'], 'tab' => 'docs']);
 $back = safe_target($_POST['_back'] ?? $_GET['back'] ?? '', $fallback);
 
 if (is_post()) {
@@ -27,14 +29,11 @@ if (is_post()) {
         flash('Dokument gelöscht.');
         redirect($back);
     }
-    $vid = $v['id'] ?? null;
-    if ($bikeArea) {
-        $sel = (string)($_POST['vehicle_id'] ?? '');
-        $vid = $sel === '' ? null : (int)vehicle_or_404($sel)['id'];
-    }
+    $sel = (string)($_POST['vehicle_id'] ?? '');
+    $vid = $sel === '' ? null : (int)vehicle_or_404($sel)['id'];
     $kind = array_key_exists($_POST['kind'] ?? '', DOC_KINDS) ? $_POST['kind'] : 'sonstiges';
     $title = str_or_null($_POST['title'] ?? '', 160);
-    $meta = ['kind' => $kind, 'vehicle_id' => $vid, 'area' => $vid ? null : 'fahrraeder', 'user_id' => uid(),
+    $meta = ['kind' => $kind, 'vehicle_id' => $vid, 'area' => $vid ? null : $area, 'user_id' => uid(),
         'doc_date' => date_or_null($_POST['doc_date'] ?? ''), 'valid_until' => date_or_null($_POST['valid_until'] ?? '')];
     if ($id) {
         update('documents', ['title' => $title ?? $d['title']] + $meta, 'id = ?', [$id]);
@@ -58,16 +57,14 @@ if (is_post()) {
 }
 
 $kinds = $bikeArea ? array_intersect_key(DOC_KINDS, array_flip(BIKE_DOC_KINDS)) + [$d['kind'] => DOC_KINDS[$d['kind']] ?? 'Sonstiges'] : DOC_KINDS;
-$heading = ($id ? 'Dokument bearbeiten' : 'Dokument hochladen') . ($v && !$bikeArea ? ' · ' . $v['name'] : '');
-page_header('Dokument', ['nav' => $v ? vehicle_group($v) : 'fahrraeder', 'back' => $back, 'heading' => $heading]);
+$heading = $id ? 'Dokument bearbeiten' : 'Dokument hochladen';
+page_header('Dokument', ['nav' => $area, 'back' => $back, 'heading' => $heading]);
 ?>
 <div class="card form-card">
 <?= form_open('', ['files' => true]) ?>
   <input type="hidden" name="_back" value="<?= e($back) ?>">
   <div class="form-grid">
-    <?php if ($bikeArea): ?>
-      <?= f_select('vehicle_id', 'Fahrrad', array_column($bs, 'name', 'id'), $d['vehicle_id'] ?? '', ['empty' => 'Allgemein (kein bestimmtes Rad)', 'class' => 'full']) ?>
-    <?php endif; ?>
+    <?= f_select('vehicle_id', $bikeArea ? 'Fahrrad' : 'Fahrzeug', array_column($bs, 'name', 'id'), $d['vehicle_id'] ?? '', ['empty' => $bikeArea ? 'Allgemein (kein bestimmtes Rad)' : 'Allgemein (kein bestimmtes Fahrzeug)', 'class' => 'full']) ?>
     <?= f_select('kind', 'Art', $kinds, $d['kind'], ['id' => 'doc-kind']) ?>
     <?= f_text('title', 'Titel', $d['title'], ['placeholder' => $id ? '' : 'optional – sonst Dateiname']) ?>
     <?= f_date('doc_date', 'Datum', $d['doc_date'], ['hint' => 'Rechnungs- bzw. Kaufdatum']) ?>

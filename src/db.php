@@ -63,7 +63,7 @@ function update(string $table, array $data, string $where, array $wp = []): void
 }
 
 /** Datenbankschema – wird bei jedem Start geprüft und bei Bedarf angelegt/erweitert */
-const SCHEMA_VERSION = 4;
+const SCHEMA_VERSION = 5;
 
 function migrate(): void
 {
@@ -333,6 +333,9 @@ function migrate(): void
         "documents ADD COLUMN service_id $fk NULL",
         "documents ADD COLUMN doc_date $date NULL",
         "documents ADD COLUMN valid_until $date NULL",
+        "vehicles ADD COLUMN frame_size {$str(20)} NULL",
+        "vehicles ADD COLUMN drive_unit {$str(80)} NULL",
+        "vehicles ADD COLUMN battery_wh $int NULL",
     ];
     foreach ($cols as $c) {
         try { db()->exec("ALTER TABLE $c"); } catch (PDOException $e) { /* existiert bereits */ }

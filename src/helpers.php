@@ -328,6 +328,25 @@ function stock_mountable(string $cat): bool
     return isset(PART_CATEGORIES[$cat]) && !isset(STOCK_EXTRA[$cat]);
 }
 
+/** Welche Felder im Fahrzeugformular zu welchem Typ gehören */
+const VEHICLE_FIELDS = [
+    'auto'      => ['plate', 'first_registration', 'vin', 'hsn_tsn', 'fuel_type', 'tank_l', 'oil_spec', 'tire_size', 'hu', 'service', 'service_km', 'spritmonitor'],
+    'motorrad'  => ['plate', 'first_registration', 'vin', 'hsn_tsn', 'fuel_type', 'tank_l', 'oil_spec', 'tire_size', 'hu', 'service', 'service_km', 'spritmonitor'],
+    'anhaenger' => ['plate', 'first_registration', 'vin', 'hsn_tsn', 'tire_size', 'hu'],
+    'sonstiges' => ['plate', 'first_registration', 'vin', 'fuel_type', 'tank_l', 'tire_size', 'hu', 'service', 'service_km', 'spritmonitor'],
+    'fahrrad'   => ['frame_size', 'frame_number', 'tire_size', 'bike_service'],
+    'ebike'     => ['frame_size', 'frame_number', 'tire_size', 'drive_unit', 'battery_wh', 'bike_service'],
+];
+function vfield(string $type, string $field): bool
+{
+    return in_array($field, VEHICLE_FIELDS[$type] ?? [], true);
+}
+/** Fahrzeugtypen eines Bereichs (autos / fahrraeder) */
+function group_types(string $group): array
+{
+    return array_filter(VEHICLE_TYPES, fn($l, $t) => vehicle_group(['type' => $t]) === $group, ARRAY_FILTER_USE_BOTH);
+}
+
 function vehicle_group(array $v): string
 {
     return in_array($v['type'], T_BIKE, true) ? 'fahrraeder' : 'autos';

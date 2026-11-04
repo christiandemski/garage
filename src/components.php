@@ -125,11 +125,15 @@ function documents_list(array $docs, array $vs, bool $showVehicle = false, strin
 
 /* ---------- Fahrradbereich ---------- */
 
-/** Unternavigation des Fahrradbereichs */
-function bike_area_nav(string $cur): string
+/** Unternavigation eines Bereichs (Autos / Fahrräder) */
+const AREA_TABS = [
+    'autos'      => ['autos' => ['Fahrzeuge', 'car'], 'reminders' => ['Fristen', 'bell'], 'documents' => ['Dokumente', 'files']],
+    'fahrraeder' => ['fahrraeder' => ['Räder', 'bike'], 'bike_service' => ['Service', 'wrench'], 'bike_stock' => ['Lager', 'box'], 'bike_docs' => ['Dokumente', 'files']],
+];
+function area_nav(string $group, string $cur): string
 {
-    $tabs = ['fahrraeder' => ['Räder', 'bike'], 'bike_service' => ['Service', 'wrench'], 'bike_stock' => ['Lager', 'box'], 'bike_docs' => ['Dokumente', 'files']];
-    $h = '<nav class="tabs area-tabs" aria-label="Fahrradbereich">';
+    $tabs = AREA_TABS[$group];
+    $h = '<nav class="tabs area-tabs" aria-label="' . e(VEHICLE_GROUPS[$group][0]) . '">';
     foreach ($tabs as $p => [$l, $ic]) {
         $h .= '<a class="' . ($p === $cur ? 'on' : '') . '" href="' . e(url($p)) . '"' . ($p === $cur ? ' aria-current="page"' : '') . '>' . icon($ic) . e($l) . '</a>';
     }

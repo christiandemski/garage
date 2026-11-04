@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 $u = current_user();
-$dueCount = count(array_filter(due_items(), fn($d) => $d['status'] !== 'ok'));
 page_header('Mehr', ['nav' => 'more']);
 $item = fn(string $href, string $ic, string $tone, string $title, string $sub = '', string $end = '') =>
     '<li><a class="list-item" href="' . e($href) . '"><span class="li-ic ' . $tone . '">' . icon($ic) . '</span><span class="li-main"><span class="li-title">' . e($title) . '</span>' . ($sub ? '<span class="li-sub">' . e($sub) . '</span>' : '') . '</span>' . $end . icon('chevron-right', 'li-chev') . '</a></li>';
@@ -10,8 +9,6 @@ $item = fn(string $href, string $ic, string $tone, string $title, string $sub = 
 <div class="card flush mb"><div class="list-item"><span class="avatar" style="width:44px;height:44px;font-size:17px"><?= e(mb_strtoupper(mb_substr($u['name'] ?: $u['email'], 0, 1))) ?></span><span class="li-main"><span class="li-title"><?= e($u['name'] ?: 'Mein Konto') ?></span><span class="li-sub"><?= e($u['email']) ?></span></span></div></div>
 
 <div class="card flush settings-nav"><ul class="list">
-  <?= $item(url('reminders'), 'bell', 'c-amber', 'Fristen', 'HU, Inspektion, Reifenwechsel …', $dueCount ? status_pill('soon', (string)$dueCount) : '') ?>
-  <?= $item(url('documents'), 'files', 'c-slate', 'Dokumente', 'Fahrzeugschein, Rechnungen, Verträge') ?>
   <?= $item(url('import'), 'refresh', 'c-teal', 'Import & Abgleich', 'Spritmonitor, MySkoda, CSV') ?>
 </ul></div>
 

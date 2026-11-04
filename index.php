@@ -27,5 +27,5 @@ if ($routes[$page]) {
 
 if (isset($_GET['v'])) $GLOBALS['CURRENT_VEHICLE'] = (int)$_GET['v'];
 
-$file = __DIR__ . '/pages/' . (isset(VEHICLE_GROUPS[$page]) ? 'vehicles' : (str_starts_with($page, 'login') || in_array($page, ['register', 'verify', 'forgot', 'reset', 'logout'], true) ? 'auth' : $page)) . '.php';
+$file = __DIR__ . '/pages/' . (isset(VEHICLE_GROUPS[$page]) ? 'vehicles' : (in_array($page, ['documents', 'bike_docs'], true) ? 'area_docs' : (str_starts_with($page, 'login') || in_array($page, ['register', 'verify', 'forgot', 'reset', 'logout'], true) ? 'auth' : $page))) . '.php';
 require $file;

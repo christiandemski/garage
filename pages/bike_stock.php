@@ -20,7 +20,7 @@ $addUrl = url('stock_edit', $cat ? ['cat' => $cat] : []);
 
 page_header('Lager', ['nav' => 'fahrraeder', 'heading' => 'Fahrräder',
     'actions' => '<a class="btn btn-primary btn-sm" href="' . e($addUrl) . '">' . icon('plus') . '<span>Artikel</span></a>']);
-echo bike_area_nav('bike_stock');
+echo area_nav('fahrraeder', 'bike_stock');
 
 if (!$all && !$removed) {
     echo '<div class="card">' . empty_state('box', 'Das Lager ist leer', 'Erfasse Ersatzteile, Reifen, Schläuche, Pflegemittel oder Werkzeug – mit Menge und Lagerort. Teile baust du später mit einem Tipp an ein Rad.', 'Artikel erfassen', $addUrl) . '</div>';

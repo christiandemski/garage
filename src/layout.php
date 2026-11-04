@@ -41,8 +41,6 @@ function page_header(string $title, array $o = []): void
       <?= nav_link('autos', 'Autos', 'car', $active) ?>
       <?= nav_link('fahrraeder', 'Fahrräder', 'bike', $active) ?>
       <?= nav_link('costs', 'Kosten', 'pie', $active) ?>
-      <?= nav_link('reminders', 'Fristen', 'bell', $active) ?>
-      <?= nav_link('documents', 'Dokumente', 'files', $active) ?>
     </nav>
     <button class="btn btn-primary side-add" data-sheet="quickadd"><?= icon('plus') ?> Eintrag</button>
     <div class="side-foot">
@@ -96,7 +94,7 @@ function nav_link(string $page, string $label, string $ic, string $active): stri
 function tab_link(string $page, string $label, string $ic): string
 {
     $cur = $GLOBALS['NAV'] ?? '';
-    $cls = $page === $cur || ($page === 'more' && in_array($cur, ['settings', 'reminders', 'documents', 'import'], true)) ? ' active' : '';
+    $cls = $page === $cur || ($page === 'more' && in_array($cur, ['settings', 'import'], true)) ? ' active' : '';
     return '<a class="tab' . $cls . '" href="' . e(url($page)) . '">' . icon($ic) . '<span>' . e($label) . '</span></a>';
 }
 
@@ -176,10 +174,12 @@ function f_text(string $name, string $label, $value = '', array $o = []): string
     }
     if (!empty($o['required'])) $attrs .= ' required';
     if (!empty($o['autofocus'])) $attrs .= ' autofocus';
+    foreach ($o['data'] ?? [] as $k => $d) $attrs .= ' data-' . e($k) . '="' . e($d) . '"';
     $suffix = isset($o['suffix']) ? '<span class="suffix">' . e($o['suffix']) . '</span>' : '';
     $hint = isset($o['hint']) ? '<small class="hint">' . $o['hint'] . '</small>' : '';
     $cls = $o['class'] ?? '';
-    return '<label class="field ' . e($cls) . '"><span class="label">' . e($label) . '</span><span class="control' . ($suffix ? ' has-suffix' : '') . '"><input type="' . e($type) . '" name="' . e($name) . '" value="' . e($value) . '"' . $attrs . '>' . $suffix . '</span>' . $hint . '</label>';
+    $ldata = isset($o['label_data']) ? ' data-lbl="' . e($o['label_data']) . '"' : '';
+    return '<label class="field ' . e($cls) . '"><span class="label"' . $ldata . '>' . e($label) . '</span><span class="control' . ($suffix ? ' has-suffix' : '') . '"><input type="' . e($type) . '" name="' . e($name) . '" value="' . e($value) . '"' . $attrs . '>' . $suffix . '</span>' . $hint . '</label>';
 }
 function f_num(string $name, string $label, $value, array $o = []): string
 {

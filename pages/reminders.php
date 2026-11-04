@@ -1,20 +1,20 @@
 <?php
 declare(strict_types=1);
 
-$vs = vehicles();
+// Fristen im Autobereich; Fahrräder haben ihre Fristen im Serviceheft
+$vs = array_values(array_filter(vehicles(), fn($v) => vehicle_group($v) === 'autos'));
 $kmBy = [];
 foreach ($vs as $v) $kmBy[$v['id']] = current_km($v);
 $ids = array_map('intval', array_column($vs, 'id'));
 $list = $ids ? rows('SELECT r.*, v.name AS vname FROM reminders r JOIN vehicles v ON v.id = r.vehicle_id WHERE r.vehicle_id IN (' . implode(',', $ids) . ') ORDER BY r.done_at IS NOT NULL, r.done_at DESC') : [];
-$parts = array_filter(due_items(), fn($d) => $d['type'] === 'part');
+$parts = array_filter(due_items(), fn($d) => $d['type'] === 'part' && vehicle_group($d['v']) === 'autos');
 
-page_header('Fristen', ['nav' => 'reminders', 'back' => url('more')]);
-if (!$vs) { echo '<div class="card">' . empty_state('car', 'Noch keine Fahrzeuge', 'Lege zuerst ein Fahrzeug an.', 'Fahrzeug anlegen', url('vehicle_edit')) . '</div>'; page_footer(); return; }
+page_header('Fristen', ['nav' => 'autos', 'heading' => 'Autos',
+    'actions' => $vs ? '<button class="btn btn-primary btn-sm" data-sheet="newrem">' . icon('plus') . '<span>Frist</span></button>' : '']);
+echo area_nav('autos', 'reminders');
+if (!$vs) { echo '<div class="card">' . empty_state('car', 'Noch keine Fahrzeuge', 'Lege zuerst ein Auto an – danach siehst du hier HU, Inspektion und weitere Fristen.', 'Auto anlegen', url('vehicle_edit', ['type' => 'auto'])) . '</div>'; page_footer(); return; }
 ?>
-<div class="row-between mb">
-  <div class="muted small">Alle Termine deiner Fahrzeuge – sortiert nach Dringlichkeit</div>
-  <button class="btn btn-primary btn-sm" data-sheet="newrem"><?= icon('plus') ?> Frist</button>
-</div>
+<p class="muted small mb">HU, Inspektion, Ölwechsel & Co. – sortiert nach Dringlichkeit</p>
 <?= reminders_list($list, $kmBy, true) ?>
 
 <?php if ($parts): ?>

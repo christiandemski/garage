@@ -214,7 +214,8 @@ case 'data':
     $fields = [
         'Art' => VEHICLE_TYPES[$v['type']] ?? '', 'Marke' => $v['make'], 'Modell' => $v['model'], 'Ausstattung' => $v['variant'], 'Baujahr' => $v['year'],
         'Kennzeichen' => $v['plate'], 'Erstzulassung' => $v['first_registration'] ? fmt_date($v['first_registration']) : null,
-        'FIN' => $v['vin'], 'HSN/TSN' => $v['hsn_tsn'], 'Rahmennummer' => $v['frame_number'],
+        'FIN' => $v['vin'], 'HSN/TSN' => $v['hsn_tsn'], 'Rahmengröße' => $v['frame_size'] ?? null, 'Rahmennummer' => $v['frame_number'],
+        'Motor / System' => $v['drive_unit'] ?? null, 'Akku' => ($v['battery_wh'] ?? null) ? fmt_num($v['battery_wh']) . ' Wh' : null,
         'Antrieb' => FUEL_TYPES[$v['fuel_type'] ?? ''] ?? null, 'Tankinhalt' => $v['tank_l'] ? fmt_num($v['tank_l'], 1) . ' ' . fuel_unit($v) : null,
         'Reifengröße' => $v['tire_size'], 'Motoröl' => $v['oil_spec'],
         'Kaufdatum' => $v['purchase_date'] ? fmt_date($v['purchase_date']) : null, 'Kaufpreis' => $v['purchase_price'] ? fmt_money($v['purchase_price']) : null,

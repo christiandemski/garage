@@ -141,15 +141,25 @@
     upd();
   }
 
-  // Fahrzeugtyp: Motor-Felder ein-/ausblenden
+  // Fahrzeugformular: nur die Felder des gewählten Typs zeigen, Platzhalter & Beschriftungen anpassen
   const vt = $('#vehicle-type');
   if (vt) {
+    const form = vt.closest('form');
+    const json = s => { try { return JSON.parse(s); } catch (e) { return {}; } };
     const upd = () => {
-      const motor = ['auto', 'motorrad'].includes(vt.value);
-      $$('[data-motor]').forEach(el => (el.style.display = motor ? '' : 'none'));
-      $$('[data-bike]').forEach(el => (el.style.display = motor ? 'none' : ''));
+      const t = vt.value;
+      $$('[data-types]', form).forEach(el => {
+        const on = el.dataset.types.split(' ').includes(t);
+        el.hidden = !on;
+        $$('input, select, textarea', el).forEach(i => (i.disabled = !on));
+      });
+      $$('[data-ph]', form).forEach(i => { const m = json(i.dataset.ph); if (m[t]) i.placeholder = m[t]; });
+      $$('[data-lbl]', form).forEach(l => { const m = json(l.dataset.lbl); if (m[t]) l.textContent = m[t]; });
     };
     vt.addEventListener('change', upd); upd();
+    // Tankinhalt in l bzw. kWh je nach Antrieb
+    const ft = $('#fuel-type'), suf = $('[name="tank_l"]', form)?.parentElement.querySelector('.suffix');
+    if (ft && suf) ft.addEventListener('change', () => (suf.textContent = ft.value === 'elektro' ? 'kWh' : 'l'));
   }
 
   // Service Worker für App-Installation & schnellen Start

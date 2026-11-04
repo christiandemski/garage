@@ -77,7 +77,7 @@ $diff = $lastYearSameTime > 0 ? ($sumYear - $lastYearSameTime) / $lastYearSameTi
 
   <div>
     <div class="card flush">
-      <div class="card-head"><h2>Als Nächstes</h2><a class="small" href="<?= e(url('reminders')) ?>">Alle</a></div>
+      <div class="card-head"><h2>Als Nächstes</h2></div>
       <?php if (!$due): ?>
         <div style="padding:0 18px 18px" class="muted small">Keine offenen Fristen. Lege z. B. HU, Inspektion oder Reifenwechsel an.</div>
       <?php else: ?>
