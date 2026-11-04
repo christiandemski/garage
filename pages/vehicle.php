@@ -16,11 +16,14 @@ $counts = [
     'reminders' => (int)val('SELECT COUNT(*) FROM reminders WHERE vehicle_id = ? AND done_at IS NULL', [$vid]),
     'parts' => (int)val('SELECT COUNT(*) FROM parts WHERE vehicle_id = ? AND removed_date IS NULL', [$vid]),
     'docs' => (int)val('SELECT COUNT(*) FROM documents WHERE vehicle_id = ?', [$vid]),
+    'service' => (int)val('SELECT COUNT(*) FROM services WHERE vehicle_id = ?', [$vid]),
 ];
+$bike = vehicle_group($v) === 'fahrraeder';
 $tabs = ['overview' => ['Übersicht', 'grid']];
 if ($motor) $tabs['fuel'] = [is_electric($v) ? 'Laden' : 'Tanken', 'fuel'];
 $tabs += [
     'costs' => ['Kosten', 'receipt'],
+] + ($bike ? ['service' => ['Service', 'wrench']] : []) + [
     'reminders' => ['Fristen', 'bell'],
     'parts' => [$motor ? 'Reifen & Teile' : 'Verschleiß', 'gauge'],
     'km' => ['Kilometer', 'route'],
@@ -45,7 +48,7 @@ page_header($v['name'], ['nav' => vehicle_group($v), 'back' => url(vehicle_group
 </div>
 
 <nav class="tabs">
-  <?php foreach ($tabs as $k => [$label, $ic]): $c = ['fuel' => $counts['fuel'], 'costs' => $counts['costs'], 'reminders' => $counts['reminders'], 'parts' => $counts['parts'], 'docs' => $counts['docs']][$k] ?? null; ?>
+  <?php foreach ($tabs as $k => [$label, $ic]): $c = ['fuel' => $counts['fuel'], 'costs' => $counts['costs'], 'reminders' => $counts['reminders'], 'parts' => $counts['parts'], 'docs' => $counts['docs'], 'service' => $counts['service']][$k] ?? null; ?>
     <a class="<?= $k === $tab ? 'on' : '' ?>" href="<?= e($self(['tab' => $k])) ?>"><?= icon($ic) ?><?= e($label) ?><?= $c ? ' <span class="count">' . $c . '</span>' : '' ?></a>
   <?php endforeach; ?>
 </nav>
@@ -98,8 +101,7 @@ case 'overview':
     if ($due) {
         echo '<ul class="list">';
         foreach (array_slice($due, 0, 6) as $d) {
-            $href = $d['type'] === 'reminder' ? url('reminder_edit', ['id' => $d['r']['id']]) : url('part_edit', ['id' => $d['r']['id']]);
-            echo '<li><a class="list-item" href="' . e($href) . '"><span class="li-ic ' . ($d['status'] === 'overdue' ? 'c-red' : ($d['status'] === 'soon' ? 'c-amber' : 'c-green')) . '">' . icon($d['icon']) . '</span><span class="li-main"><span class="li-title">' . e($d['title']) . '</span><span class="li-sub">' . e($d['text']) . '</span></span></a></li>';
+            echo '<li><a class="list-item" href="' . e($d['href']) . '"><span class="li-ic ' . ($d['status'] === 'overdue' ? 'c-red' : ($d['status'] === 'soon' ? 'c-amber' : 'c-green')) . '">' . icon($d['icon']) . '</span><span class="li-main"><span class="li-title">' . e($d['title']) . '</span><span class="li-sub">' . e($d['text']) . '</span></span></a></li>';
         }
         echo '</ul>';
     } else {
@@ -193,6 +195,14 @@ case 'parts':
     if (!$active && !$old) { echo '<div class="card">' . empty_state('gauge', 'Noch keine Teile', $motor ? 'Erfasse z. B. Sommer- und Winterreifen mit Lagerort, Profiltiefe und DOT.' : 'Erfasse Verschleißteile mit Einbau-km und Laufleistung – die App warnt dich rechtzeitig.', 'Teil erfassen', url('part_edit', ['v' => $vid])) . '</div>'; break; }
     if ($active) echo '<div class="card flush"><div class="card-head"><h2>Montiert / aktiv</h2></div><ul class="list">' . implode('', array_map(fn($p) => part_row($p, $km), $active)) . '</ul></div>';
     if ($old) echo '<div class="card flush mt"><div class="card-head"><h2>Ausgebaut / eingelagert</h2></div><ul class="list">' . implode('', array_map(fn($p) => part_row($p, $km), $old)) . '</ul></div>';
+    break;
+
+case 'service':
+    $back = $self(['tab' => 'service']);
+    $list = rows("SELECT * FROM services WHERE vehicle_id = ? ORDER BY status = 'erledigt', CASE WHEN status = 'geplant' THEN date END, date DESC, id DESC", [$vid]);
+    echo '<div class="row-between mb"><div class="muted small">Inspektion, Bremsenservice & Co. – geplant und erledigt</div><a class="btn btn-primary btn-sm" href="' . e(url('service_edit', ['v' => $vid, 'back' => $back])) . '">' . icon('plus') . ' Service</a></div>';
+    if (!$list) { echo '<div class="card">' . empty_state('wrench', 'Noch kein Service', 'Dokumentiere Inspektionen und Bremsenservice – selbst gemacht oder in der Werkstatt.', 'Service erfassen', url('service_edit', ['v' => $vid, 'back' => $back])) . '</div>'; break; }
+    echo '<div class="card flush"><ul class="list">' . implode('', array_map(fn($s) => service_row($s, [], false, $back), $list)) . '</ul></div>';
     break;
 
 case 'docs':

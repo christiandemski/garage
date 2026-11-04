@@ -6,7 +6,7 @@ $f = basename((string)($_GET['f'] ?? ''));
 if (!preg_match('/^[a-f0-9]{24}\.[a-z]{2,5}$/', $f)) not_found();
 
 $owns = val('SELECT 1 FROM vehicles WHERE user_id = ? AND photo = ?', [uid(), $f])
-    ?: val('SELECT 1 FROM documents d JOIN vehicles v ON v.id = d.vehicle_id WHERE v.user_id = ? AND d.stored_name = ?', [uid(), $f]);
+    ?: val('SELECT 1 FROM documents d LEFT JOIN vehicles v ON v.id = d.vehicle_id WHERE d.stored_name = ? AND (v.user_id = ? OR (d.vehicle_id IS NULL AND d.user_id = ?))', [$f, uid(), uid()]);
 $path = upload_dir() . '/' . $f;
 if (!$owns || !is_file($path)) not_found();
 

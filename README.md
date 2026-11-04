@@ -9,6 +9,7 @@ Private Web-App zur Verwaltung von Auto und Fahrrädern – als installierbare A
 - **Kosten**: 13 Kategorien, Belege als PDF/Foto, wiederkehrende Kosten (z. B. Versicherung monatlich/jährlich), Auswertung nach Monat, Kategorie und Fahrzeug, Kosten pro km, CSV-Export
 - **Fristen**: HU/AU, Inspektion, Ölwechsel, Reifenwechsel, Bremsflüssigkeit, Verbandskasten … nach Datum *und/oder* Kilometer, mit Intervall – „Erledigt“ legt automatisch die nächste Frist an und kann gleich die Kosten buchen
 - **Reifen & Verschleißteile**: Laufleistung je Teil (Kette, Kassette, Bremsbeläge, Reifen …), Warnung ab 80 %, Sommer/Winter-Sätze mit DOT, Profiltiefe und Lagerort, Ein-/Ausbau mit weiterlaufender Laufleistung
+- **Fahrradbereich** (getrennt von den Autos): Serviceheft für Inspektion, Bremsenservice, Gabel & Co. – geplant oder erledigt, selbst oder Werkstatt, mit Arbeiten-Checkliste, Kosten und Rechnung; Lager für Ersatzteile, Pflegemittel und Werkzeug mit Menge und Lagerort, Teile per Tipp an ein Rad montieren; Dokumente für Kaufverträge, Rechnungen und Garantien (auch ohne festes Rad) mit Garantie-Hinweis
 - **Kilometer**: Tachostände oder Fahrten (praktisch fürs Fahrrad), Kilometer pro Jahr
 - **Dokumente**: Fahrzeugschein, Rechnungen, HU-Berichte, Verträge
 - **Import**: Spritmonitor (CSV-Export und API-Abgleich), Garage-CSV, eigene Tabellen – Duplikate werden erkannt

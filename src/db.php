@@ -63,7 +63,7 @@ function update(string $table, array $data, string $where, array $wp = []): void
 }
 
 /** Datenbankschema – wird bei jedem Start geprüft und bei Bedarf angelegt/erweitert */
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 4;
 
 function migrate(): void
 {
@@ -83,6 +83,25 @@ function migrate(): void
     $ver = (int)(val('SELECT v FROM settings WHERE k = ?', ['schema_version']) ?? 0);
     if ($ver >= SCHEMA_VERSION) return;
 
+    // Dokumente: Fahrzeug optional (z. B. allgemeine Fahrrad-Rechnungen) – Besitz dann über user_id
+    $docDef = "documents (
+            id $pk,
+            user_id $fk NULL,
+            vehicle_id $fk NULL,
+            area {$str(12)} NULL,
+            cost_id $fk NULL,
+            service_id $fk NULL,
+            title {$str(160)} NOT NULL,
+            kind {$str(30)} NOT NULL DEFAULT 'sonstiges',
+            doc_date $date NULL,
+            valid_until $date NULL,
+            filename {$str(200)} NOT NULL,
+            stored_name {$str(80)} NOT NULL,
+            mime {$str(80)},
+            size $int NOT NULL DEFAULT 0,
+            created_at $dt NOT NULL,
+            FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+        )";
     $tables = [
         "users (
             id $pk,
@@ -241,18 +260,39 @@ function migrate(): void
             created_at $dt NOT NULL,
             FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
         )",
-        "documents (
+        $docDef,
+        "services (
             id $pk,
             vehicle_id $fk NOT NULL,
-            cost_id $fk NULL,
+            kind {$str(30)} NOT NULL DEFAULT 'inspektion',
             title {$str(160)} NOT NULL,
-            kind {$str(30)} NOT NULL DEFAULT 'sonstiges',
-            filename {$str(200)} NOT NULL,
-            stored_name {$str(80)} NOT NULL,
-            mime {$str(80)},
-            size $int NOT NULL DEFAULT 0,
+            status {$str(10)} NOT NULL DEFAULT 'geplant',
+            date $date NULL,
+            odometer $int NULL,
+            done_by {$str(10)} NOT NULL DEFAULT 'werkstatt',
+            workshop {$str(120)},
+            work $txt,
+            amount $money NULL,
+            cost_id $fk NULL,
+            note $txt,
             created_at $dt NOT NULL,
             FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE CASCADE
+        )",
+        "stock_items (
+            id $pk,
+            user_id $fk NOT NULL,
+            category {$str(30)} NOT NULL,
+            name {$str(160)} NOT NULL,
+            brand {$str(80)},
+            quantity $int NOT NULL DEFAULT 1,
+            location {$str(120)},
+            price $money NULL,
+            purchase_date $date NULL,
+            shop {$str(120)},
+            fits {$str(160)},
+            note $txt,
+            created_at $dt NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )",
         "login_attempts (
             id $pk,
@@ -278,6 +318,9 @@ function migrate(): void
         'CREATE INDEX idx_rem_v ON reminders (vehicle_id)',
         'CREATE INDEX idx_parts_v ON parts (vehicle_id)',
         'CREATE INDEX idx_veh_u ON vehicles (user_id)',
+        'CREATE INDEX idx_svc_v ON services (vehicle_id, date)',
+        'CREATE INDEX idx_stock_u ON stock_items (user_id)',
+        'CREATE INDEX idx_doc_u ON documents (user_id)',
     ];
     foreach ($idx as $i) {
         try { db()->exec($i); } catch (PDOException $e) { /* existiert bereits */ }
@@ -285,9 +328,37 @@ function migrate(): void
     // Spalten für bestehende Installationen nachrüsten
     $cols = [
         "costs ADD COLUMN repeat_until $date NULL",
+        "documents ADD COLUMN user_id $fk NULL",
+        "documents ADD COLUMN area {$str(12)} NULL",
+        "documents ADD COLUMN service_id $fk NULL",
+        "documents ADD COLUMN doc_date $date NULL",
+        "documents ADD COLUMN valid_until $date NULL",
     ];
     foreach ($cols as $c) {
         try { db()->exec("ALTER TABLE $c"); } catch (PDOException $e) { /* existiert bereits */ }
+    }
+    // Ab Version 4 darf ein Dokument ohne Fahrzeug existieren
+    if ($ver > 0 && $ver < 4) {
+        if ($sqlite) {
+            $info = rows('PRAGMA table_info(documents)');
+            $notNull = array_filter($info, fn($c) => $c['name'] === 'vehicle_id' && (int)$c['notnull'] === 1);
+            if ($notNull) {
+                // SQLite kann NOT NULL nicht entfernen: Tabelle neu aufbauen
+                $names = implode(',', array_column($info, 'name'));
+                db()->exec('PRAGMA foreign_keys = OFF');
+                db()->beginTransaction();
+                db()->exec('CREATE TABLE documents_new' . substr($docDef, strlen('documents')));
+                db()->exec("INSERT INTO documents_new ($names) SELECT $names FROM documents");
+                db()->exec('DROP TABLE documents');
+                db()->exec('ALTER TABLE documents_new RENAME TO documents');
+                db()->commit();
+                db()->exec('PRAGMA foreign_keys = ON');
+            }
+        } else {
+            db()->exec("ALTER TABLE documents MODIFY vehicle_id $fk NULL");
+        }
+        q('UPDATE documents SET user_id = (SELECT v.user_id FROM vehicles v WHERE v.id = documents.vehicle_id) WHERE user_id IS NULL');
+        try { db()->exec('CREATE INDEX idx_doc_u ON documents (user_id)'); } catch (PDOException $e) { /* existiert bereits */ }
     }
     setting_set('schema_version', (string)SCHEMA_VERSION);
 }

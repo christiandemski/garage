@@ -74,7 +74,7 @@ if (is_post()) {
         save_cost_items($id, $items);
         if (!empty($_FILES['receipt']['name'])) {
             if ($up = store_upload($_FILES['receipt'])) {
-                insert('documents', ['vehicle_id' => $vid, 'cost_id' => $id, 'title' => $data['title'] . ' (' . fmt_date($data['date']) . ')', 'kind' => 'rechnung',
+                insert('documents', ['user_id' => uid(), 'vehicle_id' => $vid, 'cost_id' => $id, 'title' => $data['title'] . ' (' . fmt_date($data['date']) . ')', 'kind' => 'rechnung',
                     'filename' => $up['name'], 'stored_name' => $up['stored'], 'mime' => $up['mime'], 'size' => $up['size'], 'created_at' => now()]);
             }
         }
@@ -147,7 +147,7 @@ page_header('Kosten', ['nav' => vehicle_group($v), 'back' => $back, 'heading' =>
       <div class="items mt"><?php foreach ($items as $it) echo $itemRow($it); ?></div>
       <button type="button" class="btn btn-sm btn-ghost mt js-add-item"><?= icon('plus') ?> Position</button>
     </div>
-    <div class="full js-split"<?= $items ? ' hidden' : '' ?>>
+    <div class="full js-split split-cta"<?= $items ? ' hidden' : '' ?>>
       <button type="button" class="btn btn-sm btn-ghost"><?= icon('layers') ?> In Positionen aufteilen</button>
       <small class="hint">z. B. Kombitermin in der Werkstatt: Inspektion, Reifenwechsel und HU auf einer Rechnung</small>
     </div>

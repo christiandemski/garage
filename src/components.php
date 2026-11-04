@@ -99,17 +99,76 @@ function part_row(array $p, ?int $km): string
         . '<span class="li-end"><span class="li-val">' . e($used) . '</span><span class="li-sub">' . ($p['limit_km'] ? 'von ' . fmt_km($p['limit_km']) : '') . '</span></span></a></li>';
 }
 
-function documents_list(array $docs, array $vs, bool $showVehicle = false): string
+function documents_list(array $docs, array $vs, bool $showVehicle = false, string $empty = ''): string
 {
-    if (!$docs) return '<div class="card">' . empty_state('files', 'Keine Dokumente', 'Lade Fahrzeugschein, Rechnungen, HU-Berichte oder Versicherungsunterlagen hoch (PDF oder Foto).') . '</div>';
+    if (!$docs) return '<div class="card">' . empty_state('files', 'Keine Dokumente', $empty ?: 'Lade Fahrzeugschein, Rechnungen, HU-Berichte oder Versicherungsunterlagen hoch (PDF oder Foto).') . '</div>';
     $names = array_column($vs, 'name', 'id');
     $h = '<div class="card flush"><ul class="list">';
     foreach ($docs as $d) {
         $isImg = str_starts_with((string)$d['mime'], 'image/');
+        $sub = [DOC_KINDS[$d['kind']] ?? 'Dokument'];
+        if ($showVehicle) $sub[] = $d['vehicle_id'] ? ($names[$d['vehicle_id']] ?? '') : 'Allgemein';
+        $sub[] = fmt_date($d['doc_date'] ?? null ?: $d['created_at']);
+        $pill = '';
+        if (!empty($d['valid_until'])) {
+            $left = (int)floor((strtotime($d['valid_until']) - strtotime(today())) / 86400);
+            $pill = $left < 0 ? status_pill('done', 'Garantie abgelaufen') : status_pill($left <= 90 ? 'soon' : 'ok', 'Garantie bis ' . fmt_date($d['valid_until'], true));
+        }
         $h .= '<li class="list-item"><span class="li-ic c-slate">' . icon($isImg ? 'image' : 'file') . '</span>'
             . '<a class="li-main" style="color:inherit;text-decoration:none" href="' . e(url('file', ['f' => $d['stored_name'], 'name' => $d['filename']])) . '" target="_blank" rel="noopener"><span class="li-title">' . e($d['title']) . '</span>'
-            . '<span class="li-sub">' . e(DOC_KINDS[$d['kind']] ?? 'Dokument') . ($showVehicle ? ' · ' . e($names[$d['vehicle_id']] ?? '') : '') . ' · ' . fmt_date($d['created_at']) . ' · ' . fmt_num($d['size'] / 1024 / 1024, 1) . ' MB</span></a>'
-            . '<a class="icon-btn" href="' . e(url('doc_edit', ['id' => $d['id']])) . '" aria-label="Bearbeiten">' . icon('edit') . '</a></li>';
+            . '<span class="li-sub">' . e(implode(' · ', array_filter($sub))) . '</span></a>'
+            . ($pill ? '<span class="li-end hide-xs">' . $pill . '</span>' : '')
+            . '<a class="icon-btn" href="' . e(url('doc_edit', ['id' => $d['id'], 'back' => $_SERVER['REQUEST_URI'] ?? null])) . '" aria-label="Bearbeiten">' . icon('edit') . '</a></li>';
     }
     return $h . '</ul></div>';
+}
+
+/* ---------- Fahrradbereich ---------- */
+
+/** Unternavigation des Fahrradbereichs */
+function bike_area_nav(string $cur): string
+{
+    $tabs = ['fahrraeder' => ['Räder', 'bike'], 'bike_service' => ['Service', 'wrench'], 'bike_stock' => ['Lager', 'box'], 'bike_docs' => ['Dokumente', 'files']];
+    $h = '<nav class="tabs area-tabs" aria-label="Fahrradbereich">';
+    foreach ($tabs as $p => [$l, $ic]) {
+        $h .= '<a class="' . ($p === $cur ? 'on' : '') . '" href="' . e(url($p)) . '"' . ($p === $cur ? ' aria-current="page"' : '') . '>' . icon($ic) . e($l) . '</a>';
+    }
+    return $h . '</nav>';
+}
+
+/** Alle (aktiven) Fahrräder des Nutzers */
+function bikes(bool $withArchived = false): array
+{
+    return array_values(array_filter(vehicles($withArchived), fn($v) => vehicle_group($v) === 'fahrraeder'));
+}
+
+function service_row(array $s, array $names, bool $showVehicle = true, ?string $back = null): string
+{
+    $planned = $s['status'] === 'geplant';
+    $st = service_status($s);
+    $work = $s['work'] ? count(array_filter(array_map('trim', explode("
+", $s['work'])))) : 0;
+    $sub = [];
+    if ($showVehicle) $sub[] = $names[$s['vehicle_id']] ?? '';
+    $sub[] = $planned ? $st['text'] : fmt_date($s['date']);
+    if (!$planned) {
+        if ($s['odometer'] !== null) $sub[] = fmt_km($s['odometer']);
+        $sub[] = $s['done_by'] === 'selbst' ? 'Selbst gemacht' : ($s['workshop'] ?: 'Werkstatt');
+        if ($work) $sub[] = $work . ($work === 1 ? ' Arbeit' : ' Arbeiten');
+    }
+    $tone = $planned ? ['overdue' => 'c-red', 'soon' => 'c-amber', 'ok' => 'c-sky'][$st['status']] : 'c-green';
+    $end = $planned ? ($st['status'] !== 'ok' ? status_pill($st['status']) : status_pill('accent', 'Geplant'))
+        : ($s['amount'] !== null ? '<span class="li-val">' . fmt_money($s['amount']) . '</span>' : '');
+    return '<li><a class="list-item" href="' . e(url('service_edit', ['id' => $s['id']] + ($back ? ['back' => $back] : []))) . '"><span class="li-ic ' . $tone . '">' . icon(SERVICE_KINDS[$s['kind']][1] ?? 'wrench') . '</span>'
+        . '<span class="li-main"><span class="li-title">' . e($s['title']) . '</span><span class="li-sub">' . e(implode(' · ', array_filter($sub))) . '</span></span>'
+        . ($end ? '<span class="li-end">' . $end . '</span>' : '') . '</a></li>';
+}
+
+function stock_row(array $i): string
+{
+    $sub = array_filter([$i['brand'], $i['location'] ? 'Lager: ' . $i['location'] : null, $i['fits'] ? 'passt zu ' . $i['fits'] : null]);
+    $qty = (int)$i['quantity'];
+    return '<li><a class="list-item' . ($qty <= 0 ? ' is-empty' : '') . '" href="' . e(url('stock_edit', ['id' => $i['id']])) . '"><span class="li-ic c-orange">' . icon(stock_icon($i['category'])) . '</span>'
+        . '<span class="li-main"><span class="li-title">' . e($i['name']) . '</span><span class="li-sub">' . e(implode(' · ', $sub) ?: (stock_categories()[$i['category']] ?? '')) . '</span></span>'
+        . '<span class="li-end"><span class="qty">' . $qty . '×</span>' . ($i['price'] !== null ? '<span class="li-sub">' . fmt_money($i['price']) . '</span>' : '') . '</span></a></li>';
 }

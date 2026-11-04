@@ -13,6 +13,7 @@ $archived = array_filter($all, fn($v) => $v['archived']);
 $addUrl = url('vehicle_edit', ['type' => $newType]);
 
 page_header($title, ['nav' => $group, 'actions' => '<a class="btn btn-primary btn-sm" href="' . e($addUrl) . '">' . icon('plus') . '<span>' . e($single) . '</span></a>']);
+if ($group === 'fahrraeder') echo bike_area_nav('fahrraeder');
 ?>
 <?php if (!$all): ?>
   <div class="card"><?= $group === 'fahrraeder'

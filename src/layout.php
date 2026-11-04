@@ -104,6 +104,10 @@ function quickadd_sheet(): void
 {
     $vs = vehicles();
     $cur = (int)($GLOBALS['CURRENT_VEHICLE'] ?? 0);
+    // Ohne konkretes Fahrzeug: erstes Fahrzeug des aktuellen Bereichs (Autos/Fahrräder) vorauswählen
+    if (!$cur && isset(VEHICLE_GROUPS[$GLOBALS['NAV'] ?? ''])) {
+        foreach ($vs as $v) if (vehicle_group($v) === $GLOBALS['NAV']) { $cur = (int)$v['id']; break; }
+    }
     ?>
 <div class="sheet" id="sheet-quickadd" hidden>
   <div class="sheet-backdrop" data-close></div>
@@ -116,11 +120,12 @@ function quickadd_sheet(): void
     <?php else: ?>
       <div class="seg seg-scroll" role="tablist" id="qa-vehicles">
         <?php foreach ($vs as $i => $v): ?>
-          <button type="button" class="seg-btn<?= ($cur ? $v['id'] == $cur : $i === 0) ? ' on' : '' ?>" data-vid="<?= (int)$v['id'] ?>" data-motor="<?= is_motor($v) ? 1 : 0 ?>"><?= icon(vehicle_icon($v)) ?><?= e($v['name']) ?></button>
+          <button type="button" class="seg-btn<?= ($cur ? $v['id'] == $cur : $i === 0) ? ' on' : '' ?>" data-vid="<?= (int)$v['id'] ?>" data-motor="<?= is_motor($v) ? 1 : 0 ?>" data-bike="<?= vehicle_group($v) === 'fahrraeder' ? 1 : 0 ?>"><?= icon(vehicle_icon($v)) ?><?= e($v['name']) ?></button>
         <?php endforeach; ?>
       </div>
       <div class="qa-grid">
         <a class="qa-item" data-href="<?= e(url('fuel_edit', ['v' => '__V__'])) ?>" data-motor-only><span class="qa-ic c-teal"><?= icon('fuel') ?></span>Tanken</a>
+        <a class="qa-item" data-href="<?= e(url('service_edit', ['v' => '__V__'])) ?>" data-bike-only hidden><span class="qa-ic c-green"><?= icon('wrench') ?></span>Service</a>
         <a class="qa-item" data-href="<?= e(url('cost_edit', ['v' => '__V__'])) ?>"><span class="qa-ic c-indigo"><?= icon('receipt') ?></span>Kosten</a>
         <a class="qa-item" data-href="<?= e(url('odo_edit', ['v' => '__V__'])) ?>"><span class="qa-ic c-sky"><?= icon('route') ?></span>Kilometer</a>
         <a class="qa-item" data-href="<?= e(url('reminder_edit', ['v' => '__V__'])) ?>"><span class="qa-ic c-amber"><?= icon('bell') ?></span>Frist</a>

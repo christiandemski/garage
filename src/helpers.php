@@ -288,6 +288,45 @@ const DOC_KINDS = [
     'foto'           => 'Foto',
     'sonstiges'      => 'Sonstiges',
 ];
+// Im Fahrradbereich sinnvolle Dokumentarten
+const BIKE_DOC_KINDS = ['kaufvertrag', 'rechnung', 'garantie', 'anleitung', 'versicherung', 'foto', 'sonstiges'];
+
+/** Serviceheft (Fahrrad): [Bezeichnung, Icon, Intervall in Monaten, typische Arbeiten] */
+const SERVICE_KINDS = [
+    'inspektion' => ['Inspektion', 'wrench', 12, ['Sicherheitscheck', 'Schaltung eingestellt', 'Bremsen geprüft', 'Kette geprüft & geschmiert', 'Laufräder zentriert',
+        'Lager geprüft (Steuersatz, Tretlager, Naben)', 'Schrauben mit Drehmoment nachgezogen', 'Reifen & Luftdruck geprüft', 'Licht geprüft']],
+    'bremsen' => ['Bremsenservice', 'brake', 12, ['Beläge geprüft', 'Beläge gewechselt', 'Bremsscheiben geprüft', 'Bremsscheiben gewechselt',
+        'Bremsen entlüftet', 'Bremsflüssigkeit gewechselt', 'Bremssättel ausgerichtet', 'Bremsleitungen/-züge gewechselt']],
+    'fahrwerk' => ['Gabel & Dämpfer', 'layers', 12, ['Gabel – kleiner Service', 'Gabel – großer Service', 'Dämpfer – Luftkammer-Service', 'Dämpfer – großer Service',
+        'Dichtungen gewechselt', 'Öl gewechselt']],
+    'antrieb' => ['Antrieb & Schaltung', 'refresh', null, ['Kette gewechselt', 'Kassette gewechselt', 'Kettenblatt gewechselt', 'Schaltzüge gewechselt',
+        'Schaltwerk eingestellt', 'Tretlager gewechselt']],
+    'ebike' => ['E-Bike-System', 'zap', 12, ['Software-Update', 'Fehlerspeicher ausgelesen', 'Akku geprüft', 'Motor geprüft', 'Steckverbindungen geprüft']],
+    'sonstiges' => ['Sonstiges', 'wrench', null, []],
+];
+function service_label(string $k): string { return SERVICE_KINDS[$k][0] ?? 'Service'; }
+
+/** Lager: Verschleißteil-Kategorien fürs Fahrrad plus Dinge, die man nur lagert */
+const STOCK_EXTRA = [
+    'pflege'   => ['Pflege & Schmierstoffe', 'droplet'],
+    'werkzeug' => ['Werkzeug', 'wrench'],
+    'zubehoer' => ['Zubehör & Bekleidung', 'tag'],
+];
+function stock_categories(): array
+{
+    $c = array_map(fn($p) => $p[0], for_vehicle(PART_CATEGORIES, ['type' => 'fahrrad'], 2));
+    unset($c['sonstiges']);
+    return $c + array_map(fn($x) => $x[0], STOCK_EXTRA) + ['sonstiges' => 'Sonstiges'];
+}
+function stock_icon(string $cat): string
+{
+    return STOCK_EXTRA[$cat][1] ?? ['reifen' => 'tire', 'akku' => 'zap', 'licht' => 'sun', 'bremsbelag' => 'brake', 'bremsscheibe' => 'brake'][$cat] ?? 'gauge';
+}
+/** Kann der Lagerartikel als Verschleißteil an ein Rad montiert werden? */
+function stock_mountable(string $cat): bool
+{
+    return isset(PART_CATEGORIES[$cat]) && !isset(STOCK_EXTRA[$cat]);
+}
 
 function vehicle_group(array $v): string
 {

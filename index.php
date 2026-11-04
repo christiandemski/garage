@@ -10,6 +10,7 @@ $routes = [
     'dashboard' => true, 'vehicles' => true, 'autos' => true, 'fahrraeder' => true, 'vehicle' => true, 'vehicle_edit' => true,
     'fuel_edit' => true, 'cost_edit' => true, 'odo_edit' => true, 'reminder_edit' => true, 'reminder_done' => true,
     'part_edit' => true, 'doc_edit' => true, 'file' => true,
+    'bike_service' => true, 'service_edit' => true, 'bike_stock' => true, 'stock_edit' => true, 'bike_docs' => true,
     'costs' => true, 'reminders' => true, 'documents' => true, 'more' => true,
     'settings' => true, 'import' => true, 'export' => true,
 ];

@@ -25,6 +25,14 @@ function owned(string $table, $id): array
     return $r;
 }
 
+/** Dokument laden: über das Fahrzeug oder (ohne Fahrzeug) über user_id */
+function owned_doc($id): array
+{
+    $r = row('SELECT d.* FROM documents d LEFT JOIN vehicles v ON v.id = d.vehicle_id WHERE d.id = ? AND (v.user_id = ? OR (d.vehicle_id IS NULL AND d.user_id = ?))', [(int)$id, uid(), uid()]);
+    if (!$r) not_found();
+    return $r;
+}
+
 function not_found(): never
 {
     http_response_code(404);
@@ -294,17 +302,64 @@ function due_items(?array $only = null): array
         $km = current_km($v);
         foreach (rows('SELECT * FROM reminders WHERE vehicle_id = ? AND done_at IS NULL', [$v['id']]) as $r) {
             $st = reminder_status($r, $km);
-            $items[] = ['type' => 'reminder', 'v' => $v, 'r' => $r, 'title' => $r['title'], 'icon' => REMINDER_KINDS[$r['kind']][1] ?? 'bell'] + $st;
+            $items[] = ['type' => 'reminder', 'v' => $v, 'r' => $r, 'title' => $r['title'], 'icon' => REMINDER_KINDS[$r['kind']][1] ?? 'bell', 'href' => url('reminder_edit', ['id' => $r['id']])] + $st;
         }
         foreach (rows('SELECT * FROM parts WHERE vehicle_id = ? AND removed_date IS NULL AND limit_km IS NOT NULL', [$v['id']]) as $p) {
             $w = part_wear($p, $km);
             if ($w['pct'] === null || $w['pct'] < 80) continue;
-            $items[] = ['type' => 'part', 'v' => $v, 'r' => $p, 'title' => part_label($p['category']) . ': ' . $p['name'], 'icon' => 'gauge',
+            $items[] = ['type' => 'part', 'v' => $v, 'r' => $p, 'title' => part_label($p['category']) . ': ' . $p['name'], 'icon' => 'gauge', 'href' => url('part_edit', ['id' => $p['id']]),
                 'status' => $w['pct'] >= 100 ? 'overdue' : 'soon', 'text' => fmt_num($w['used']) . ' von ' . fmt_km($p['limit_km']) . ' (' . round($w['pct']) . ' %)', 'sort' => (int)((100 - $w['pct']) * 3)];
+        }
+        foreach (rows("SELECT * FROM services WHERE vehicle_id = ? AND status = 'geplant' AND date IS NOT NULL", [$v['id']]) as $s) {
+            $items[] = ['type' => 'service', 'v' => $v, 'r' => $s, 'title' => $s['title'], 'icon' => SERVICE_KINDS[$s['kind']][1] ?? 'wrench',
+                'href' => url('service_edit', ['id' => $s['id']])] + service_status($s);
         }
     }
     usort($items, fn($a, $b) => $a['sort'] <=> $b['sort']);
     return $items;
+}
+
+/* ---------- Serviceheft ---------- */
+
+/** Status eines geplanten Service nach Datum (wie bei Fristen: 30 Tage Vorlauf) */
+function service_status(array $s): array
+{
+    if ($s['status'] !== 'geplant' || !$s['date']) return ['status' => 'ok', 'text' => $s['date'] ? fmt_date($s['date']) : 'ohne Termin', 'sort' => 9999];
+    $days = (int)floor((strtotime($s['date']) - strtotime(today())) / 86400);
+    $text = fmt_date($s['date']) . ' · ' . rel_days($s['date']) . ($s['done_by'] === 'werkstatt' && $s['workshop'] ? ' · ' . $s['workshop'] : '');
+    return ['status' => $days < 0 ? 'overdue' : ($days <= 30 ? 'soon' : 'ok'), 'days' => $days, 'text' => $text, 'sort' => $days];
+}
+
+/** Kosten eines erledigten Service als Kosteneintrag führen (anlegen, anpassen oder entfernen) */
+function sync_service_cost(array $s): ?int
+{
+    $want = $s['status'] === 'erledigt' && $s['amount'] !== null && (float)$s['amount'] > 0;
+    $costId = $s['cost_id'] ? (int)$s['cost_id'] : null;
+    if ($costId && !val('SELECT id FROM costs WHERE id = ?', [$costId])) $costId = null;
+    if (!$want) {
+        if ($costId) {
+            q('UPDATE documents SET cost_id = NULL WHERE cost_id = ?', [$costId]);
+            q('DELETE FROM costs WHERE id = ?', [$costId]);
+        }
+        return null;
+    }
+    $data = ['vehicle_id' => $s['vehicle_id'], 'date' => $s['date'] ?? today(), 'category' => 'wartung', 'title' => $s['title'], 'amount' => $s['amount'],
+        'odometer' => $s['odometer'], 'vendor' => $s['done_by'] === 'werkstatt' ? $s['workshop'] : null];
+    if ($costId) {
+        update('costs', $data, 'id = ?', [$costId]);
+        return $costId;
+    }
+    return insert('costs', $data + ['created_at' => now()]);
+}
+
+/** Letzter erledigter Service je Art für ein Rad */
+function last_services(int $vid): array
+{
+    $out = [];
+    foreach (rows("SELECT * FROM services WHERE vehicle_id = ? AND status = 'erledigt' ORDER BY date DESC, id DESC", [$vid]) as $s) {
+        $out[$s['kind']] ??= $s;
+    }
+    return $out;
 }
 
 function part_wear(array $p, ?int $km): array

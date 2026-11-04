@@ -59,7 +59,6 @@ page_header('Kosten', ['nav' => 'costs', 'actions' => '<a class="icon-btn" href=
   <?= f_select('cat', 'Kategorie', array_map(fn($c) => $c[0], COST_CATEGORIES), $cat, ['empty' => 'Alle Kategorien']) ?>
   <noscript><button class="btn">Anwenden</button></noscript>
 </form>
-<script>document.querySelectorAll('.filters select').forEach(s=>s.addEventListener('change',()=>s.form.submit()));</script>
 
 <div class="kpis">
   <?= kpi('Summe · ' . $label, fmt_money($total, false), count($list) . ' Einträge', 'euro', 'accent') ?>

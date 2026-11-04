@@ -83,7 +83,7 @@ $diff = $lastYearSameTime > 0 ? ($sumYear - $lastYearSameTime) / $lastYearSameTi
       <?php else: ?>
       <ul class="list">
         <?php foreach (array_slice($due, 0, 7) as $d): ?>
-          <li><a class="list-item" href="<?= e($d['type'] === 'reminder' ? url('reminder_edit', ['id' => $d['r']['id']]) : url('part_edit', ['id' => $d['r']['id']])) ?>">
+          <li><a class="list-item" href="<?= e($d['href']) ?>">
             <span class="li-ic <?= $d['status'] === 'overdue' ? 'c-red' : ($d['status'] === 'soon' ? 'c-amber' : '') ?>"><?= icon($d['icon']) ?></span>
             <span class="li-main"><span class="li-title"><?= e($d['title']) ?></span><span class="li-sub"><?= e($d['v']['name']) ?> · <?= e($d['text']) ?></span></span>
             <?= $d['status'] !== 'ok' ? status_pill($d['status']) : '' ?>

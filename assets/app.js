@@ -10,6 +10,8 @@
     if (!s) return;
     s.hidden = false;
     document.body.style.overflow = 'hidden';
+    // Vorausgewähltes Fahrzeug in der Leiste sichtbar machen
+    $('.seg-scroll .seg-btn.on', s)?.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   function closeSheets() {
     $$('.sheet').forEach(s => (s.hidden = true));
@@ -37,9 +39,12 @@
   function updateQa() {
     const on = $('.seg-btn.on', qa);
     if (!on) return;
-    const vid = on.dataset.vid, motor = on.dataset.motor === '1';
+    const vid = on.dataset.vid, motor = on.dataset.motor === '1', bike = on.dataset.bike === '1';
     $$('.qa-item').forEach(a => {
       a.href = a.dataset.href.replace('__V__', vid);
+      // Fahrrad: „Service“ statt „Tanken“, damit das Raster vollständig bleibt
+      if (a.hasAttribute('data-bike-only')) a.hidden = !bike;
+      a.hidden = a.hasAttribute('data-motor-only') ? bike : a.hidden;
       a.classList.toggle('disabled', a.hasAttribute('data-motor-only') && !motor);
     });
   }
@@ -51,6 +56,9 @@
     });
     updateQa();
   }
+
+  // Filterleisten: Auswahl sofort anwenden
+  $$('.filters select').forEach(s => s.addEventListener('change', () => s.form.submit()));
 
   // Löschen bestätigen
   document.addEventListener('submit', e => {
@@ -107,6 +115,31 @@
     const l = $('[name="limit_km"]'); const km = pc.selectedOptions[0].dataset.km;
     if (l && !l.value && km) l.value = km;
   });
+
+  // Serviceheft: Arbeiten passend zur Art zeigen, Felder je nach Status
+  const sk = $('#svc-kind');
+  if (sk) {
+    const form = sk.closest('form'), next = $('#svc-next');
+    const upd = () => {
+      $$('[data-tasks]', form).forEach(f => {
+        const on = f.dataset.tasks === sk.value;
+        f.hidden = !on;
+        $$('input', f).forEach(i => (i.disabled = !on));
+      });
+      const st = ($('[name="status"]:checked', form) || {}).value;
+      $$('[data-when]', form).forEach(el => (el.hidden = el.dataset.when !== st));
+      const shop = $('[name="done_by"]:checked', form);
+      const ws = $('[name="workshop"]', form).closest('.field');
+      if (ws) ws.hidden = shop && shop.value === 'selbst';
+    };
+    sk.addEventListener('change', () => {
+      if (next && !next.dataset.touched) next.value = sk.selectedOptions[0].dataset.months || '0';
+      upd();
+    });
+    next?.addEventListener('change', () => (next.dataset.touched = '1'));
+    form.addEventListener('change', upd);
+    upd();
+  }
 
   // Fahrzeugtyp: Motor-Felder ein-/ausblenden
   const vt = $('#vehicle-type');
