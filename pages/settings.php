@@ -4,6 +4,18 @@ declare(strict_types=1);
 $u = current_user();
 $newToken = null;
 
+// Sicherung herunterladen (nur Admin – enthält die Daten aller Konten)
+if (!is_post() && isset($_GET['backup']) && $u['is_admin']) {
+    $path = backup_path((string)$_GET['backup']);
+    if (!$path) not_found();
+    session_write_close();
+    header('Content-Type: application/zip');
+    header('Content-Disposition: attachment; filename="' . basename($path) . '"');
+    header('Content-Length: ' . filesize($path));
+    readfile($path);
+    exit;
+}
+
 if (is_post()) {
     csrf_check();
     $do = $_POST['do'] ?? '';
@@ -45,6 +57,17 @@ if (is_post()) {
         case 'token_revoke':
             update('users', ['api_token_hash' => null, 'api_token_hint' => null], 'id = ?', [$u['id']]);
             flash('API-Schlüssel widerrufen.');
+            break;
+        case 'backup_now':
+            if ($u['is_admin']) {
+                try {
+                    $b = backup_create();
+                    flash('Sicherung erstellt (' . fmt_bytes((int)$b['size']) . ', ' . $b['files'] . ' Dateien).');
+                } catch (Throwable $e) {
+                    flash('Sicherung fehlgeschlagen: ' . $e->getMessage(), 'err');
+                }
+                redirect(url('settings') . '#sicherung');
+            }
             break;
         case 'registration':
             if ($u['is_admin']) { setting_set('registration_open', !empty($_POST['open']) ? '1' : '0'); flash('Gespeichert.'); }
@@ -136,7 +159,28 @@ page_header('Einstellungen', ['nav' => 'settings', 'back' => url('more')]);
     </dl>
   </div>
 
-  <?php if ($u['is_admin']): ?>
+  <?php if ($u['is_admin']): $backups = backup_list(); $last = $backups[0] ?? null; ?>
+  <div class="card flush" id="sicherung">
+    <div class="card-head"><h2>Datensicherung</h2>
+      <form method="post" action="<?= e(url('settings')) ?>" class="inline"><?= csrf_field() ?><input type="hidden" name="do" value="backup_now"><button class="btn btn-sm" type="submit"><?= icon('archive') ?> Jetzt sichern</button></form>
+    </div>
+    <p class="muted small" style="padding:0 18px">Täglich automatisch über den Cronjob: Datenbank und alle Belege, Dokumente und Fotos als ZIP. Die letzten <?= max(1, (int)cfg('backup_keep', 14)) ?> Sicherungen bleiben erhalten.</p>
+    <?php if ($last && $last['time'] < time() - 2 * 86400): ?>
+      <div class="banner warn" style="margin:0 18px 12px"><?= icon('alert') ?><p>Die letzte Sicherung ist <?= e(rel_days(date('Y-m-d', $last['time']))) ?> entstanden – läuft der tägliche Cronjob?</p></div>
+    <?php endif; ?>
+    <?php if ($backups): ?>
+      <ul class="list">
+        <?php foreach (array_slice($backups, 0, 5) as $b): ?>
+          <li><a class="list-item" href="<?= e(url('settings', ['backup' => $b['name']])) ?>" download><span class="li-ic c-slate"><?= icon('archive') ?></span>
+            <span class="li-main"><span class="li-title"><?= e(date('d.m.Y, H:i', $b['time'])) ?> Uhr</span><span class="li-sub"><?= e(fmt_bytes((int)$b['size'])) ?></span></span><?= icon('download', 'li-chev') ?></a></li>
+        <?php endforeach; ?>
+      </ul>
+      <?php if (count($backups) > 5): ?><p class="muted xs" style="padding:0 18px 14px">+ <?= count($backups) - 5 ?> ältere auf dem Webspace unter <code>data/backups</code></p><?php endif; ?>
+    <?php else: ?>
+      <p class="muted small" style="padding:0 18px 18px">Noch keine Sicherung vorhanden.</p>
+    <?php endif; ?>
+  </div>
+
   <div class="card">
     <h2 class="mb">Administration</h2>
     <form method="post" action="<?= e(url('settings')) ?>"><?= csrf_field() ?><input type="hidden" name="do" value="registration">

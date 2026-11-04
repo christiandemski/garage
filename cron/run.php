@@ -4,6 +4,7 @@
  *  - E-Mail-Erinnerungen für fällige Fristen und Verschleißteile
  *  - Spritmonitor-Abgleich für verknüpfte Fahrzeuge
  *  - Aufräumen (abgelaufene Anmelde-Token)
+ *  - Datensicherung (Datenbank + Belege) nach data/backups, höchstens einmal in 20 Stunden
  *
  * Aufruf per CLI:  php /pfad/zu/garage/cron/run.php
  * oder per URL:    https://deine-domain/cron/run.php?key=<cron_key aus config.php>
@@ -74,5 +75,15 @@ foreach (rows('SELECT * FROM users') as $user) {
     $text .= "\nZur App: $base/\n";
     $ok = send_mail($user['email'], count($items) === 1 ? 'Garage: ' . $items[0]['title'] . ' steht an' : 'Garage: ' . count($items) . ' Termine stehen an', $text, mail_html('Anstehende Termine', $html, 'Garage öffnen', $base . '/'));
     $log("Erinnerung an {$user['email']}: " . count($items) . ' Einträge' . ($ok ? '' : ' (Versand fehlgeschlagen)'));
+}
+// Datensicherung
+$last = setting_get('backup_last');
+if (!$last || strtotime($last) < time() - 20 * 3600) {
+    try {
+        $b = backup_create();
+        $log("Sicherung {$b['name']}: " . fmt_bytes((int)$b['size']) . ", {$b['files']} Dateien");
+    } catch (Throwable $e) {
+        $log('Sicherung fehlgeschlagen: ' . $e->getMessage());
+    }
 }
 $log('Fertig.');

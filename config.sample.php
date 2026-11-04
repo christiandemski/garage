@@ -30,6 +30,9 @@ return [
     // Schlüssel für Cron-Aufrufe per URL: /cron/run.php?key=...
     'cron_key' => 'bitte-lange-zufaellige-zeichenkette',
 
+    // Datensicherung (täglich per Cronjob nach data/backups): Anzahl aufbewahrter Sicherungen
+    'backup_keep' => 14,
+
     // Spritmonitor: Application-ID (beim Spritmonitor-Support anfragen)
     'spritmonitor_app_id' => '',
 

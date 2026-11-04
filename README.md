@@ -62,7 +62,7 @@ Im Plesk-Dateimanager im Ordner der App `config.sample.php` kopieren, als `confi
 
 Die Tabellen werden beim ersten Aufruf automatisch angelegt.
 
-### 5. Täglicher Cronjob (Erinnerungen & Spritmonitor)
+### 5. Täglicher Cronjob (Erinnerungen, Spritmonitor & Datensicherung)
 
 Plesk → **Geplante Aufgaben → Aufgabe hinzufügen → URL abrufen**:
 
@@ -71,6 +71,8 @@ https://garage.deinedomain.de/cron/run.php?key=DEIN_CRON_KEY
 ```
 
 Täglich, z. B. 7:00 Uhr. Unter *Einstellungen → Benachrichtigungen* kannst du eine Test-E-Mail schicken.
+
+**Datensicherung:** Der Cronjob legt einmal täglich ein ZIP mit Datenbank und allen Belegen, Dokumenten und Fotos unter `data/backups` an (gesperrt für den Webzugriff). Die letzten 14 bleiben erhalten (`backup_keep` in `config.php`). Unter *Einstellungen → Datensicherung* (nur Admin) lassen sich Sicherungen herunterladen oder sofort erstellen; im ZIP liegt eine Anleitung zur Wiederherstellung. `config.php` ist bewusst nicht enthalten – die bitte separat aufbewahren.
 
 ### 6. Als App aufs Handy
 

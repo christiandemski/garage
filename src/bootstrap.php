@@ -22,6 +22,7 @@ require APP_ROOT . '/src/icons.php';
 require APP_ROOT . '/src/layout.php';
 require APP_ROOT . '/src/components.php';
 require APP_ROOT . '/src/importers.php';
+require APP_ROOT . '/src/backup.php';
 
 date_default_timezone_set((string)cfg('timezone', 'Europe/Berlin'));
 mb_internal_encoding('UTF-8');
