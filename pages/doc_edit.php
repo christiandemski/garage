@@ -17,7 +17,9 @@ $area = $v ? vehicle_group($v) : ($areaParam ?? ($d['area'] ?: 'autos'));
 $bikeArea = $area === 'fahrraeder';
 $bs = array_values(array_filter(vehicles(), fn($x) => vehicle_group($x) === $area));
 if ($v && !in_array((int)$v['id'], array_map('intval', array_column($bs, 'id')), true)) $bs[] = $v;
-$areaDocs = url($bikeArea ? 'bike_docs' : 'documents');
+$car = $bikeArea ? null : single_car();
+$areaDocs = $bikeArea ? url('bike_docs') : ($car ? url('vehicle', ['id' => $car['id'], 'tab' => 'docs']) : url('documents'));
+if ($car && !$v) { $v = $car; $d['vehicle_id'] = $car['id']; }
 $fallback = ($areaParam || !$v) ? $areaDocs : url('vehicle', ['id' => $v['id'], 'tab' => 'docs']);
 $back = safe_target($_POST['_back'] ?? $_GET['back'] ?? '', $fallback);
 
@@ -64,7 +66,9 @@ page_header('Dokument', ['nav' => $area, 'back' => $back, 'heading' => $heading]
 <?= form_open('', ['files' => true]) ?>
   <input type="hidden" name="_back" value="<?= e($back) ?>">
   <div class="form-grid">
+    <?php if ($car && count($bs) === 1): ?><input type="hidden" name="vehicle_id" value="<?= (int)$car['id'] ?>"><?php else: ?>
     <?= f_select('vehicle_id', $bikeArea ? 'Fahrrad' : 'Fahrzeug', array_column($bs, 'name', 'id'), $d['vehicle_id'] ?? '', ['empty' => $bikeArea ? 'Allgemein (kein bestimmtes Rad)' : 'Allgemein (kein bestimmtes Fahrzeug)', 'class' => 'full']) ?>
+    <?php endif; ?>
     <?= f_select('kind', 'Art', $kinds, $d['kind'], ['id' => 'doc-kind']) ?>
     <?= f_text('title', 'Titel', $d['title'], ['placeholder' => $id ? '' : 'optional – sonst Dateiname']) ?>
     <?= f_date('doc_date', 'Datum', $d['doc_date'], ['hint' => 'Rechnungs- bzw. Kaufdatum']) ?>

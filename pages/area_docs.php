@@ -4,6 +4,7 @@ declare(strict_types=1);
 // Dokumente eines Bereichs: ?p=documents (Autos) bzw. ?p=bike_docs (Fahrräder)
 $group = $page === 'bike_docs' ? 'fahrraeder' : 'autos';
 $bike = $group === 'fahrraeder';
+if (!$bike && ($car = single_car())) redirect(url('vehicle', ['id' => $car['id'], 'tab' => 'docs']));
 $vs = array_values(array_filter(vehicles(true), fn($v) => vehicle_group($v) === $group));
 $ids = array_map('intval', array_column($vs, 'id'));
 $names = array_column($vs, 'name', 'id');

@@ -38,7 +38,7 @@ function page_header(string $title, array $o = []): void
     <a class="brand" href="<?= e(url()) ?>"><span class="brand-mark"><?= icon('car') ?></span><span>Garage</span></a>
     <nav class="side-nav">
       <?= nav_link('dashboard', 'Übersicht', 'home', $active) ?>
-      <?= nav_link('autos', 'Autos', 'car', $active) ?>
+      <?= nav_link('autos', group_label('autos'), 'car', $active, group_url('autos')) ?>
       <?= nav_link('fahrraeder', 'Fahrräder', 'bike', $active) ?>
       <?= nav_link('costs', 'Kosten', 'pie', $active) ?>
     </nav>
@@ -73,7 +73,7 @@ function page_footer(): void
   </div>
   <nav class="tabbar">
     <?= tab_link('dashboard', 'Übersicht', 'home') ?>
-    <?= tab_link('autos', 'Autos', 'car') ?>
+    <?= tab_link('autos', group_label('autos'), 'car', group_url('autos')) ?>
     <?= tab_link('fahrraeder', 'Fahrräder', 'bike') ?>
     <button class="tab-add" data-sheet="quickadd" aria-label="Neuer Eintrag"><?= icon('plus') ?></button>
     <?= tab_link('costs', 'Kosten', 'pie') ?>
@@ -86,16 +86,16 @@ function page_footer(): void
 <?php
 }
 
-function nav_link(string $page, string $label, string $ic, string $active): string
+function nav_link(string $page, string $label, string $ic, string $active, ?string $href = null): string
 {
     $cls = $page === $active ? ' active' : '';
-    return '<a class="nav-link' . $cls . '" href="' . e(url($page)) . '">' . icon($ic) . '<span>' . e($label) . '</span></a>';
+    return '<a class="nav-link' . $cls . '" href="' . e($href ?? url($page)) . '">' . icon($ic) . '<span>' . e($label) . '</span></a>';
 }
-function tab_link(string $page, string $label, string $ic): string
+function tab_link(string $page, string $label, string $ic, ?string $href = null): string
 {
     $cur = $GLOBALS['NAV'] ?? '';
     $cls = $page === $cur || ($page === 'more' && in_array($cur, ['settings', 'import'], true)) ? ' active' : '';
-    return '<a class="tab' . $cls . '" href="' . e(url($page)) . '">' . icon($ic) . '<span>' . e($label) . '</span></a>';
+    return '<a class="tab' . $cls . '" href="' . e($href ?? url($page)) . '">' . icon($ic) . '<span>' . e($label) . '</span></a>';
 }
 
 function quickadd_sheet(): void

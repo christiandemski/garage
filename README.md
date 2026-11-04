@@ -34,20 +34,14 @@ Im Netcup-Kundenbereich (WCP / Plesk):
 3. **SSL-Zertifikat** (Let’s Encrypt) für die Subdomain aktivieren.
 4. Unter *PHP-Einstellungen* PHP **8.1 oder neuer** wählen.
 
-### 2. Dateien hochladen – automatisch per GitHub
+### 2. Dateien bereitstellen – automatisch per Plesk-Git
 
-Der Workflow `.github/workflows/deploy.yml` lädt bei jedem Push auf `main` alles per FTP hoch.
+Plesk holt sich den Code selbst von GitHub, in GitHub müssen keine Zugangsdaten hinterlegt werden.
 
-Im GitHub-Repository unter **Settings → Secrets and variables → Actions → New repository secret** anlegen:
+1. Plesk → Domain → **Git** → Repository hinzufügen: `https://github.com/<benutzer>/garage.git`, Branch `main`, Bereitstellung automatisch in den Dokumentenstamm der Subdomain.
+2. Die angezeigte **Webhook-URL** in GitHub unter **Settings → Webhooks → Add webhook** eintragen (Content type `application/json`, Ereignis „Just the push event“).
 
-| Secret | Inhalt |
-|---|---|
-| `FTP_SERVER` | FTP-Server aus dem WCP (z. B. `hostXXXX.netcup.net`) |
-| `FTP_USERNAME` | FTP-Benutzer |
-| `FTP_PASSWORD` | FTP-Passwort |
-| `FTP_DIR` | Zielordner = Dokumentenstamm der Subdomain, z. B. `/garage/` |
-
-Danach unter **Actions → Deploy auf Netcup → Run workflow** einmal starten (oder einfach etwas pushen).
+Danach wird jeder Push auf `main` automatisch bereitgestellt. `config.php` und `data/` liegen nicht im Repository und bleiben dabei unangetastet.
 
 > Alternativ: Repository als ZIP herunterladen und im Plesk-Dateimanager hochladen und entpacken.
 

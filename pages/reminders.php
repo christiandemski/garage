@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+if ($car = single_car()) redirect(url('vehicle', ['id' => $car['id'], 'tab' => 'reminders']));
 // Fristen im Autobereich; Fahrräder haben ihre Fristen im Serviceheft
 $vs = array_values(array_filter(vehicles(), fn($v) => vehicle_group($v) === 'autos'));
 $kmBy = [];

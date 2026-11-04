@@ -197,6 +197,10 @@ page_header($title, ['nav' => $group, 'back' => $id ? url('vehicle', ['id' => $i
 <?php if ($id): ?>
 <div class="card form-card mt">
   <h2>Fahrzeug verwalten</h2>
+  <?php if ($group === 'autos' && single_car()): ?>
+    <p class="muted small mt">Weitere Fahrzeuge kannst du jederzeit ergänzen – ab dem zweiten zeigt „Autos“ wieder eine Liste.
+      <a href="<?= e(url('vehicle_edit', ['type' => 'auto'])) ?>">Weiteres Fahrzeug anlegen</a> · <a href="<?= e(url('autos', ['list' => 1])) ?>">Alle inkl. Archiv</a></p>
+  <?php endif; ?>
   <p class="muted small mt">Archivierte Fahrzeuge verschwinden aus Übersicht und Schnell-Eintrag, ihre Daten bleiben erhalten. Beim Löschen werden alle Einträge und Dokumente endgültig entfernt.</p>
   <div class="row wrap">
     <form method="post" class="inline"><?= csrf_field() ?><input type="hidden" name="do" value="archive"><button class="btn" type="submit"><?= icon('archive') ?> <?= $v['archived'] ? 'Wieder aktivieren' : 'Archivieren' ?></button></form>

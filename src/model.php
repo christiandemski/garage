@@ -9,6 +9,29 @@ function vehicles(bool $withArchived = false): array
     return rows($sql, [uid()]);
 }
 
+/**
+ * Genau ein aktives Auto (bzw. Motorrad, Anhänger …)? Dann ist der Autobereich direkt dessen Seite
+ * statt einer Liste. Ab dem zweiten Fahrzeug erscheint automatisch wieder die Liste.
+ */
+function single_car(): ?array
+{
+    static $car = false;
+    if ($car === false) {
+        $cars = array_values(array_filter(vehicles(), fn($v) => vehicle_group($v) === 'autos'));
+        $car = count($cars) === 1 ? $cars[0] : null;
+    }
+    return $car;
+}
+function group_label(string $group): string
+{
+    return $group === 'autos' && single_car() ? 'Auto' : VEHICLE_GROUPS[$group][0];
+}
+function group_url(string $group): string
+{
+    $car = $group === 'autos' ? single_car() : null;
+    return $car ? url('vehicle', ['id' => $car['id']]) : url($group);
+}
+
 /** Fahrzeug des angemeldeten Nutzers oder 404 */
 function vehicle_or_404($id): array
 {
