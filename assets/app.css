@@ -306,7 +306,7 @@ a.list-item:hover { background: var(--surface-2); text-decoration: none; }
 .vhero-body { position: relative; z-index: 1; padding: 18px 20px; width: 100%; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .vhero h2 { font-size: 24px; font-weight: 700; }
 .vhero .sub { opacity: .85; font-size: 14px; }
-.vhero .vcard-plate { position: relative; display: inline-block; margin-top: 8px; }
+.vhero .vcard-plate { position: relative; left: auto; bottom: auto; display: inline-block; margin-top: 8px; }
 .vhero-km { text-align: right; }
 .vhero-km b { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -.02em; display: block; line-height: 1.1; }
 .vhero-km span { font-size: 12px; opacity: .8; }

@@ -14,6 +14,7 @@ if (!is_file($configFile)) {
 $GLOBALS['CONFIG'] = require $configFile;
 
 require APP_ROOT . '/src/helpers.php';
+require APP_ROOT . '/src/routes.php';
 require APP_ROOT . '/src/db.php';
 require APP_ROOT . '/src/auth.php';
 require APP_ROOT . '/src/model.php';

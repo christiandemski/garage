@@ -129,7 +129,7 @@ Alle Aufrufe mit Header `Authorization: Bearer <API-Schlüssel>`.
 
 ```bash
 cp config.sample.php config.php   # driver auf 'sqlite', base_url auf '' setzen
-php -S localhost:8000
+php -S localhost:8000 index.php   # index.php als Router für die schönen Adressen
 ```
 
 ## Sicherheit

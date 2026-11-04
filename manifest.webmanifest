@@ -3,7 +3,7 @@
   "short_name": "Garage",
   "description": "Auto und Fahrräder verwalten: Tanken, Kosten, Fristen, Verschleiß.",
   "lang": "de",
-  "start_url": "index.php",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0b0c0f",
@@ -14,8 +14,8 @@
     { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Autos", "url": "index.php?p=autos" },
-    { "name": "Fahrräder", "url": "index.php?p=fahrraeder" },
-    { "name": "Kosten", "url": "index.php?p=costs" }
+    { "name": "Auto", "url": "autos" },
+    { "name": "Fahrräder", "url": "fahrraeder" },
+    { "name": "Kosten", "url": "kosten" }
   ]
 }

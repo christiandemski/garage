@@ -53,7 +53,6 @@ $q = fn(array $p) => url('costs', array_filter(['v' => $vf ?: null, 'y' => $peri
 page_header('Kosten', ['nav' => 'costs', 'actions' => '<a class="icon-btn" href="' . e(url('export', ['what' => 'costs', 'v' => $vf ?: null, 'y' => $period])) . '" aria-label="Als CSV exportieren" title="Als CSV exportieren">' . icon('download') . '</a>']);
 ?>
 <form class="filters" method="get">
-  <input type="hidden" name="p" value="costs">
   <?= f_select('v', 'Fahrzeug', array_column($vs, 'name', 'id'), $vf ?: '', ['empty' => 'Alle Fahrzeuge']) ?>
   <?= f_select('y', 'Zeitraum', ['12m' => 'Letzte 12 Monate'] + $years + ['all' => 'Gesamt'], $period) ?>
   <?= f_select('cat', 'Kategorie', array_map(fn($c) => $c[0], COST_CATEGORIES), $cat, ['empty' => 'Alle Kategorien']) ?>

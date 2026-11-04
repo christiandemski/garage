@@ -20,13 +20,6 @@ function today(): string
     return date('Y-m-d');
 }
 
-function url(string $page = '', array $params = []): string
-{
-    $base = rtrim((string)cfg('base_url', ''), '/');
-    if ($page !== '') $params = ['p' => $page] + $params;
-    $qs = $params ? '?' . http_build_query($params) : '';
-    return ($base === '' ? '' : $base) . '/index.php' . $qs;
-}
 function asset(string $path): string
 {
     $file = APP_ROOT . '/assets/' . $path;

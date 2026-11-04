@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Aufruf als ?p=autos oder ?p=fahrraeder; alte Links auf ?p=vehicles landen bei den Autos
+// Aufruf als /autos oder /fahrraeder; alte Links auf ?p=vehicles landen bei den Autos
 if (!isset(VEHICLE_GROUPS[$page])) redirect(url('autos'));
 $group = $page;
 if ($group === 'autos' && ($car = single_car()) && empty($_GET['list'])) redirect(url('vehicle', ['id' => $car['id']]));

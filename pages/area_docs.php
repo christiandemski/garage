@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-// Dokumente eines Bereichs: ?p=documents (Autos) bzw. ?p=bike_docs (Fahrräder)
+// Dokumente eines Bereichs: /autos/dokumente bzw. /fahrraeder/dokumente
 $group = $page === 'bike_docs' ? 'fahrraeder' : 'autos';
 $bike = $group === 'fahrraeder';
 if (!$bike && ($car = single_car())) redirect(url('vehicle', ['id' => $car['id'], 'tab' => 'docs']));
@@ -48,7 +48,6 @@ echo area_nav($group, $page);
 <?php endif; ?>
 
 <form class="filters" method="get">
-  <input type="hidden" name="p" value="<?= e($page) ?>">
   <?= f_select('v', $bike ? 'Fahrrad' : 'Fahrzeug', ['allg' => $general] + $names, $vf, ['empty' => 'Alle']) ?>
   <?= f_select('kind', 'Art', $kinds, $kind, ['empty' => 'Alle Arten']) ?>
   <noscript><button class="btn">Anwenden</button></noscript>

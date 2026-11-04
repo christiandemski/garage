@@ -12,6 +12,10 @@ DirectoryIndex index.php
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
   # Interne Ordner sperren
   RewriteRule ^(src|pages|data|tools|\.git|\.github|\.idea)(/|$) - [F,L]
+  # Schöne Adressen: alles, was keine echte Datei ist, an index.php
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^ index.php [L,QSA]
 </IfModule>
 
 # Konfiguration und sonstige interne Dateien nie ausliefern
