@@ -60,7 +60,7 @@ if (is_post()) {
 }
 
 $w = $id ? part_wear($p, $km) : null;
-page_header('Teil', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ? $p['name'] : 'Neues Teil') . ' · ' . $v['name']]);
+page_header('Teil', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => ($id ? $p['name'] : 'Neues Teil') . ' · ' . $v['name']]);
 if ($w && $w['used'] !== null): ?>
   <div class="card form-card mb">
     <div class="row-between"><div><div class="muted small">Laufleistung</div><div class="kpi-value"><?= fmt_km($w['used']) ?></div></div>

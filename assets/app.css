@@ -120,7 +120,7 @@ code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); 
 /* Tabbar (mobil) */
 .tabbar {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(5, 1fr); align-items: center;
+  display: grid; grid-template-columns: repeat(6, 1fr); align-items: center;
   height: calc(var(--tabbar) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
   background: var(--blur-bg); backdrop-filter: saturate(1.8) blur(18px); -webkit-backdrop-filter: saturate(1.8) blur(18px);
   border-top: 1px solid var(--line);
@@ -193,6 +193,7 @@ code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); 
 .card.flush { padding: 0; overflow: hidden; }
 .card.flush .card-head { padding: 16px 18px 0; margin-bottom: 6px; }
 .section-title { font-size: 13px; font-weight: 650; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 26px 4px 10px; }
+.section-title a { color: inherit; }
 .grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 900px) {
   .grid-2 { grid-template-columns: 1fr 1fr; }

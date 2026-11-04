@@ -1,16 +1,29 @@
 <?php
 declare(strict_types=1);
 
-$all = vehicles(true);
+// Aufruf als ?p=autos oder ?p=fahrraeder; alte Links auf ?p=vehicles landen bei den Autos
+if (!isset(VEHICLE_GROUPS[$page])) redirect(url('autos'));
+$group = $page;
+[$title, $ic, $newType] = VEHICLE_GROUPS[$group];
+$single = VEHICLE_TYPES[$newType];
+
+$all = array_filter(vehicles(true), fn($v) => vehicle_group($v) === $group);
 $active = array_filter($all, fn($v) => !$v['archived']);
 $archived = array_filter($all, fn($v) => $v['archived']);
+$addUrl = url('vehicle_edit', ['type' => $newType]);
 
-page_header('Fahrzeuge', ['nav' => 'vehicles', 'actions' => '<a class="btn btn-primary btn-sm" href="' . e(url('vehicle_edit')) . '">' . icon('plus') . '<span>Fahrzeug</span></a>']);
+page_header($title, ['nav' => $group, 'actions' => '<a class="btn btn-primary btn-sm" href="' . e($addUrl) . '">' . icon('plus') . '<span>' . e($single) . '</span></a>']);
 ?>
+<?php if (!$all): ?>
+  <div class="card"><?= $group === 'fahrraeder'
+      ? empty_state('bike', 'Noch keine Fahrräder', 'Lege dein Fahrrad oder E-Bike an – mit Kilometern, Verschleißteilen und Kosten.', 'Fahrrad anlegen', $addUrl)
+      : empty_state('car', 'Noch kein Auto', 'Lege dein Auto, Motorrad oder deinen Anhänger an – mit Tanken, Fristen und Kosten.', 'Auto anlegen', $addUrl) ?></div>
+<?php else: ?>
 <div class="vcards">
   <?php foreach ($active as $v) echo vehicle_card($v); ?>
-  <a class="vcard add" href="<?= e(url('vehicle_edit')) ?>"><span><?= icon('plus') ?>Fahrzeug hinzufügen</span></a>
+  <a class="vcard add" href="<?= e($addUrl) ?>"><span><?= icon('plus') ?><?= e($single) ?> hinzufügen</span></a>
 </div>
+<?php endif; ?>
 
 <?php if ($archived): ?>
   <h3 class="section-title">Archiviert</h3>

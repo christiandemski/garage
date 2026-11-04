@@ -128,7 +128,7 @@ $itemRow = function (array $it) use ($cats): string {
         . '<button type="button" class="icon-btn js-del-item" aria-label="Position entfernen" title="Position entfernen">' . icon('x') . '</button></div>';
 };
 
-page_header('Kosten', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ? 'Kosten bearbeiten' : 'Neue Kosten') . ' · ' . $v['name']]);
+page_header('Kosten', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => ($id ? 'Kosten bearbeiten' : 'Neue Kosten') . ' · ' . $v['name']]);
 ?>
 <div class="card form-card">
 <?= form_open('', ['files' => true]) ?>

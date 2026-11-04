@@ -39,7 +39,7 @@ if (is_post()) {
 }
 
 $bike = !is_motor($v);
-page_header('Kilometer', ['nav' => 'vehicles', 'back' => $back, 'heading' => 'Kilometer · ' . $v['name']]);
+page_header('Kilometer', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => 'Kilometer · ' . $v['name']]);
 ?>
 <div class="card form-card">
 <?= form_open() ?>

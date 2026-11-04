@@ -17,7 +17,7 @@ if (is_post()) {
         delete_vehicle_files($id);
         q('DELETE FROM vehicles WHERE id = ? AND user_id = ?', [$id, uid()]);
         flash('Fahrzeug gelöscht.');
-        redirect(url('vehicles'));
+        redirect(url(vehicle_group($v)));
     }
     if ($id && $do === 'archive') {
         update('vehicles', ['archived' => $v['archived'] ? 0 : 1], 'id = ?', [$id]);
@@ -86,7 +86,7 @@ if (is_post()) {
 }
 
 $title = $id ? $v['name'] . ' bearbeiten' : 'Neues Fahrzeug';
-page_header($title, ['nav' => 'vehicles', 'back' => $id ? url('vehicle', ['id' => $id]) : url('vehicles')]);
+page_header($title, ['nav' => vehicle_group($v), 'back' => $id ? url('vehicle', ['id' => $id]) : url(vehicle_group($v))]);
 $types = VEHICLE_TYPES;
 ?>
 <div class="card form-card">
@@ -145,7 +145,7 @@ $types = VEHICLE_TYPES;
     </div>
   </div>
   <div class="form-actions">
-    <a class="btn btn-ghost" href="<?= e($id ? url('vehicle', ['id' => $id]) : url('vehicles')) ?>">Abbrechen</a>
+    <a class="btn btn-ghost" href="<?= e($id ? url('vehicle', ['id' => $id]) : url(vehicle_group($v))) ?>">Abbrechen</a>
     <button class="btn btn-primary" type="submit"><?= icon('check') ?> Speichern</button>
   </div>
 </form>

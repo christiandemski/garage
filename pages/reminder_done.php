@@ -29,7 +29,7 @@ if (is_post()) {
     redirect($back);
 }
 
-page_header('Erledigt', ['nav' => 'vehicles', 'back' => $back, 'heading' => $r['title'] . ' erledigen']);
+page_header('Erledigt', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => $r['title'] . ' erledigen']);
 ?>
 <div class="card form-card">
 <?= form_open() ?>

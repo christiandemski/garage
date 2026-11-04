@@ -29,7 +29,7 @@ $tabs += [
 ];
 if (!isset($tabs[$tab])) $tab = 'overview';
 
-page_header($v['name'], ['nav' => 'vehicles', 'back' => url('vehicles'), 'heading' => $v['name'],
+page_header($v['name'], ['nav' => vehicle_group($v), 'back' => url(vehicle_group($v)), 'heading' => $v['name'],
     'actions' => '<a class="icon-btn" href="' . e(url('vehicle_edit', ['id' => $vid])) . '" aria-label="Bearbeiten">' . icon('edit') . '</a>']);
 ?>
 <div class="vhero" style="--vc:<?= e($v['color'] ?: '#0f766e') ?>">

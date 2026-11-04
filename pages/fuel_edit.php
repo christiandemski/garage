@@ -60,7 +60,7 @@ if (is_post()) {
 }
 
 $prevKm = current_km($v);
-page_header($id ? 'Tankvorgang' : (is_electric($v) ? 'Ladevorgang' : 'Tanken'), ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ? 'Tankvorgang bearbeiten' : (is_electric($v) ? 'Laden' : 'Tanken')) . ' · ' . $v['name']]);
+page_header($id ? 'Tankvorgang' : (is_electric($v) ? 'Ladevorgang' : 'Tanken'), ['nav' => vehicle_group($v), 'back' => $back, 'heading' => ($id ? 'Tankvorgang bearbeiten' : (is_electric($v) ? 'Laden' : 'Tanken')) . ' · ' . $v['name']]);
 $ppuVal = ($f['quantity'] && $f['total'] && is_numeric($f['quantity']) && is_numeric($f['total'])) ? (float)$f['total'] / (float)$f['quantity'] : null;
 ?>
 <div class="card form-card">

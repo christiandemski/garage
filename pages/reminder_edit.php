@@ -49,7 +49,7 @@ if (is_post()) {
 
 $km = current_km($v);
 $st = $id && !$r['done_at'] ? reminder_status($r, $km) : null;
-page_header('Frist', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ? $r['title'] : 'Neue Frist') . ' · ' . $v['name']]);
+page_header('Frist', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => ($id ? $r['title'] : 'Neue Frist') . ' · ' . $v['name']]);
 if ($st): ?>
   <div class="card form-card mb">
     <div class="row-between"><div><div class="label-strong"><?= e($r['title']) ?></div><div class="muted small"><?= e($st['text']) ?></div></div><?= status_pill($st['status']) ?></div>

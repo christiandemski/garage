@@ -7,7 +7,7 @@ $routes = [
     // ohne Anmeldung
     'login' => false, 'register' => false, 'verify' => false, 'forgot' => false, 'reset' => false, 'logout' => false,
     // mit Anmeldung
-    'dashboard' => true, 'vehicles' => true, 'vehicle' => true, 'vehicle_edit' => true,
+    'dashboard' => true, 'vehicles' => true, 'autos' => true, 'fahrraeder' => true, 'vehicle' => true, 'vehicle_edit' => true,
     'fuel_edit' => true, 'cost_edit' => true, 'odo_edit' => true, 'reminder_edit' => true, 'reminder_done' => true,
     'part_edit' => true, 'doc_edit' => true, 'file' => true,
     'costs' => true, 'reminders' => true, 'documents' => true, 'more' => true,
@@ -26,5 +26,5 @@ if ($routes[$page]) {
 
 if (isset($_GET['v'])) $GLOBALS['CURRENT_VEHICLE'] = (int)$_GET['v'];
 
-$file = __DIR__ . '/pages/' . (str_starts_with($page, 'login') || in_array($page, ['register', 'verify', 'forgot', 'reset', 'logout'], true) ? 'auth' : $page) . '.php';
+$file = __DIR__ . '/pages/' . (isset(VEHICLE_GROUPS[$page]) ? 'vehicles' : (str_starts_with($page, 'login') || in_array($page, ['register', 'verify', 'forgot', 'reset', 'logout'], true) ? 'auth' : $page)) . '.php';
 require $file;

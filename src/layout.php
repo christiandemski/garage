@@ -38,7 +38,8 @@ function page_header(string $title, array $o = []): void
     <a class="brand" href="<?= e(url()) ?>"><span class="brand-mark"><?= icon('car') ?></span><span>Garage</span></a>
     <nav class="side-nav">
       <?= nav_link('dashboard', 'Übersicht', 'home', $active) ?>
-      <?= nav_link('vehicles', 'Fahrzeuge', 'grid', $active) ?>
+      <?= nav_link('autos', 'Autos', 'car', $active) ?>
+      <?= nav_link('fahrraeder', 'Fahrräder', 'bike', $active) ?>
       <?= nav_link('costs', 'Kosten', 'pie', $active) ?>
       <?= nav_link('reminders', 'Fristen', 'bell', $active) ?>
       <?= nav_link('documents', 'Dokumente', 'files', $active) ?>
@@ -74,7 +75,8 @@ function page_footer(): void
   </div>
   <nav class="tabbar">
     <?= tab_link('dashboard', 'Übersicht', 'home') ?>
-    <?= tab_link('vehicles', 'Fahrzeuge', 'grid') ?>
+    <?= tab_link('autos', 'Autos', 'car') ?>
+    <?= tab_link('fahrraeder', 'Fahrräder', 'bike') ?>
     <button class="tab-add" data-sheet="quickadd" aria-label="Neuer Eintrag"><?= icon('plus') ?></button>
     <?= tab_link('costs', 'Kosten', 'pie') ?>
     <?= tab_link('more', 'Mehr', 'more') ?>

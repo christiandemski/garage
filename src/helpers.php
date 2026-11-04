@@ -195,6 +195,11 @@ const VEHICLE_TYPES = [
     'sonstiges' => 'Sonstiges',
 ];
 const MOTOR_TYPES = ['auto', 'motorrad'];
+// Bereiche in der Navigation: Fahrräder getrennt vom Rest (Autos, Motorrad, Anhänger …)
+const VEHICLE_GROUPS = [
+    'autos'      => ['Autos', 'car', 'auto'],
+    'fahrraeder' => ['Fahrräder', 'bike', 'fahrrad'],
+];
 // Für Kategorien: zu welchen Fahrzeugtypen sie passen (ohne Angabe: zu allen)
 const T_BIKE = ['fahrrad', 'ebike'];
 const T_FUEL = ['auto', 'motorrad', 'sonstiges'];
@@ -284,6 +289,10 @@ const DOC_KINDS = [
     'sonstiges'      => 'Sonstiges',
 ];
 
+function vehicle_group(array $v): string
+{
+    return in_array($v['type'], T_BIKE, true) ? 'fahrraeder' : 'autos';
+}
 function is_motor(array $v): bool
 {
     return in_array($v['type'], MOTOR_TYPES, true);

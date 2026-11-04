@@ -67,8 +67,12 @@ $diff = $lastYearSameTime > 0 ? ($sumYear - $lastYearSameTime) / $lastYearSameTi
       <?php endif; ?>
     </div>
 
-    <h3 class="section-title">Fahrzeuge</h3>
-    <div class="vcards"><?php foreach ($vs as $v) echo vehicle_card($v); ?></div>
+    <?php foreach (VEHICLE_GROUPS as $g => [$gl]):
+        $gv = array_filter($vs, fn($v) => vehicle_group($v) === $g);
+        if (!$gv) continue; ?>
+      <h3 class="section-title"><a href="<?= e(url($g)) ?>"><?= e($gl) ?></a></h3>
+      <div class="vcards"><?php foreach ($gv as $v) echo vehicle_card($v); ?></div>
+    <?php endforeach; ?>
   </div>
 
   <div>

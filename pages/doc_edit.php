@@ -43,7 +43,7 @@ if (is_post()) {
     flash('Bitte eine Datei auswählen.', 'err');
 }
 
-page_header('Dokument', ['nav' => 'vehicles', 'back' => $back, 'heading' => ($id ? 'Dokument bearbeiten' : 'Dokument hochladen') . ' · ' . $v['name']]);
+page_header('Dokument', ['nav' => vehicle_group($v), 'back' => $back, 'heading' => ($id ? 'Dokument bearbeiten' : 'Dokument hochladen') . ' · ' . $v['name']]);
 ?>
 <div class="card form-card">
 <?= form_open('', ['files' => true]) ?>
