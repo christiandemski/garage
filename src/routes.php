@@ -26,6 +26,19 @@ function single_car_id(): ?int
     return $car ? (int)$car['id'] : null;
 }
 
+/** Adress-Stamm eines Fahrzeugs: „auto“ (Auto, Motorrad, Anhänger …) oder „fahrrad“ */
+const VEHICLE_ROOTS = ['autos' => 'auto', 'fahrraeder' => 'fahrrad'];
+function vehicle_root(int $id): string
+{
+    static $types = null;
+    if ($types === null) {
+        $types = function_exists('current_user') && current_user() ? array_column(rows('SELECT id, type FROM vehicles WHERE user_id = ?', [uid()]), 'type', 'id') : [];
+    }
+    // z. B. gerade angelegt oder ohne Anmeldung (Cron): einzeln nachschlagen
+    if (!isset($types[$id])) $types[$id] = (string)(val('SELECT type FROM vehicles WHERE id = ?', [$id]) ?? 'auto');
+    return VEHICLE_ROOTS[vehicle_group(['type' => $types[$id]])];
+}
+
 function base_path(): string
 {
     return rtrim((string)parse_url((string)cfg('base_url', ''), PHP_URL_PATH), '/');
@@ -37,9 +50,13 @@ function url(string $page = '', array $params = []): string
     $id = isset($params['id']) && $params['id'] !== '' ? (string)$params['id'] : null;
     if ($page === 'vehicle' || $page === 'vehicle_edit') {
         if ($id === null) {
-            $path = $page === 'vehicle_edit' ? 'fahrzeug/neu' : 'autos';
+            // Neu: /auto/neu bzw. /fahrrad/neu – der Standardtyp des Bereichs braucht keinen Parameter
+            $type = (string)($params['type'] ?? 'auto');
+            $group = vehicle_group(['type' => $type]);
+            if ($type === VEHICLE_GROUPS[$group][2]) unset($params['type']);
+            $path = $page === 'vehicle_edit' ? VEHICLE_ROOTS[$group] . '/neu' : 'autos';
         } else {
-            $root = $page === 'vehicle' && (int)$id === single_car_id() ? 'auto' : 'fahrzeug/' . rawurlencode($id);
+            $root = ctype_digit($id) && (int)$id === single_car_id() ? 'auto' : vehicle_root((int)$id) . '/' . rawurlencode($id);
             $seg = $page === 'vehicle_edit' ? 'bearbeiten' : (TAB_PATHS[$params['tab'] ?? ''] ?? '');
             $path = $root . ($seg !== '' ? '/' . $seg : '');
         }
@@ -75,18 +92,24 @@ function route_request(string $uriPath): array
     if ($page !== false) return [$page, []];
     if ($path === 'fristen') return ['reminders', []];
 
-    // Das einzige Auto: /auto, /auto/<reiter>
-    if ($s[0] === 'auto' && $n <= 2) {
-        $car = single_car_id();
-        if (!$car) return ['autos', []];
-        $tab = $n === 2 ? array_search($s[1], TAB_PATHS, true) : 'overview';
-        return $tab === false ? ['404', []] : ['vehicle', ['id' => $car, 'tab' => $tab]];
-    }
-    if ($s[0] === 'fahrzeug') {
-        if ($n === 2 && $s[1] === 'neu') return ['vehicle_edit', []];
-        if ($isId(1) && $n === 2) return ['vehicle', ['id' => $s[1]]];
-        if ($isId(1) && $n === 3 && $s[2] === 'bearbeiten') return ['vehicle_edit', ['id' => $s[1]]];
-        if ($isId(1) && $n === 3 && ($tab = array_search($s[2], TAB_PATHS, true)) !== false) return ['vehicle', ['id' => $s[1], 'tab' => $tab]];
+    // Fahrzeuge: /auto/<id>[/<reiter>|/bearbeiten], /fahrrad/<id>…, /…/neu
+    // (/fahrzeug/… war kurz die gemeinsame Adresse und wird von index.php umgeleitet)
+    if (in_array($s[0], ['auto', 'fahrrad', 'fahrzeug'], true)) {
+        if ($n === 2 && $s[1] === 'neu') return ['vehicle_edit', $s[0] === 'fahrrad' ? ['type' => 'fahrrad'] : []];
+        if ($isId(1)) {
+            if ($n === 2) return ['vehicle', ['id' => $s[1]]];
+            if ($n === 3 && $s[2] === 'bearbeiten') return ['vehicle_edit', ['id' => $s[1]]];
+            if ($n === 3 && ($tab = array_search($s[2], TAB_PATHS, true)) !== false) return ['vehicle', ['id' => $s[1], 'tab' => $tab]];
+            return ['404', []];
+        }
+        // Das einzige Auto: /auto, /auto/<reiter>, /auto/bearbeiten
+        if ($s[0] === 'auto' && $n <= 2) {
+            $car = single_car_id();
+            if (!$car) return ['autos', []];
+            if ($n === 2 && $s[1] === 'bearbeiten') return ['vehicle_edit', ['id' => $car]];
+            $tab = $n === 2 ? array_search($s[1], TAB_PATHS, true) : 'overview';
+            return $tab === false ? ['404', []] : ['vehicle', ['id' => $car, 'tab' => $tab]];
+        }
         return ['404', []];
     }
     if ($s[0] === 'fristen' && $n === 3 && $isId(1) && $s[2] === 'erledigt') return ['reminder_done', ['id' => $s[1]]];

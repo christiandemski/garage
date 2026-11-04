@@ -32,8 +32,15 @@ if (isset($_GET['p'])) {
         exit;
     }
 } else {
-    [$page, $params] = route_request((string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+    $path = (string)parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    [$page, $params] = route_request($path);
     $_GET = $params + $_GET;
+    // Fahrzeugseiten haben genau eine Adresse (z. B. /fahrzeug/2 → /fahrrad/2, /auto/1 → /auto im Ein-Auto-Modus)
+    if (in_array($page, ['vehicle', 'vehicle_edit'], true) && isset($params['id']) && current_user() && ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET'
+        && row('SELECT id FROM vehicles WHERE id = ? AND user_id = ?', [(int)$params['id'], uid()])) {
+        $canonical = url($page, $_GET);
+        if (parse_url($canonical, PHP_URL_PATH) !== $path) { header('Location: ' . $canonical, true, 301); exit; }
+    }
 }
 if ($page === '404') {
     require_login();
